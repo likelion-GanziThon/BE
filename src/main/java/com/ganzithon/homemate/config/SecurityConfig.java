@@ -45,7 +45,7 @@ public class SecurityConfig {
                         // 프리플라이트 전역 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // 공개 엔드포인트
-                        .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/housing/**", "/h2-console/**", "/error").permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 // 401/403 응답을 명확하게
