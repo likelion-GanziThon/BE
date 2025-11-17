@@ -1,10 +1,15 @@
 package com.ganzithon.homemate.service;
 
 import com.ganzithon.homemate.dto.HousingApiResponse;
+import com.ganzithon.homemate.dto.RecommendationResponse;
 import com.ganzithon.homemate.entity.HousingInfo;
 import com.ganzithon.homemate.repository.HousingInfoRepository;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +28,7 @@ public class HousingInfoService {
 
     private final HousingInfoRepository housingInfoRepository;
     private final RestTemplate restTemplate;
+    private final UpstageAiService upstageAiService;
 
     @Value("${housing.api.key:}")
     private String apiKey;
@@ -706,5 +712,286 @@ public class HousingInfoService {
         return housingInfoRepository.findByHsmpSn(hsmpSn)
                 .orElseThrow(() -> new RuntimeException("주거정보를 찾을 수 없습니다: " + hsmpSn));
     }
-}
 
+    //AI를 활용하여 사용자 프롬프트에 맞는 주거정보 TOP5를 추천
+    //@param userPrompt 사용자가 입력한 프롬프트 (예: "강남구에 있는 저렴한 아파트 추천해줘")
+    //@param region 권역 선택 (예: "서울_강남권", "부산_동부해안권", "경기_남부핵심권" 등)
+    //@return 추천된 주거정보 목록 (TOP5)
+    
+    @Transactional(readOnly = true)
+    public RecommendationResponse getRecommendations(String userPrompt, String region) {
+        try {
+            log.info("AI 추천 요청 수신: prompt={}, region={}", userPrompt, region);
+
+            // 권역별 구/시 코드 목록 가져오기
+            List<String> regionCodes = getRegionCodes(region);
+            
+            // 권역이 필수이므로 없으면 에러 반환
+            if (regionCodes == null || regionCodes.isEmpty()) {
+                log.warn("권역 정보가 없거나 매핑되지 않음: {}", region);
+                return new RecommendationResponse(List.of());
+            }
+            
+            // 권역에 해당하는 주거정보 필터링 (제한 없음 - 권역별로 나눠서 받으므로)
+            List<HousingInfo> allHousingInfo;
+            // 광역시/도 전체인 경우 (코드가 2자리)
+            if (regionCodes.size() == 1 && regionCodes.get(0).length() == 2) {
+                String brtcCode = regionCodes.get(0);
+                allHousingInfo = housingInfoRepository.findAll().stream()
+                        .filter(info -> {
+                            // brtcNm에서 코드 추출 또는 직접 매칭
+                            if (brtcCode.equals("28") && info.getBrtcNm() != null && info.getBrtcNm().contains("인천")) return true;
+                            if (brtcCode.equals("27") && info.getBrtcNm() != null && info.getBrtcNm().contains("대구")) return true;
+                            if (brtcCode.equals("29") && info.getBrtcNm() != null && info.getBrtcNm().contains("광주")) return true;
+                            if (brtcCode.equals("30") && info.getBrtcNm() != null && info.getBrtcNm().contains("대전")) return true;
+                            if (brtcCode.equals("31") && info.getBrtcNm() != null && info.getBrtcNm().contains("울산")) return true;
+                            if (brtcCode.equals("36") && info.getBrtcNm() != null && info.getBrtcNm().contains("세종")) return true;
+                            if (brtcCode.equals("42") && info.getBrtcNm() != null && info.getBrtcNm().contains("강원")) return true;
+                            if (brtcCode.equals("43") && info.getBrtcNm() != null && info.getBrtcNm().contains("충북")) return true;
+                            if (brtcCode.equals("44") && info.getBrtcNm() != null && info.getBrtcNm().contains("충남")) return true;
+                            if (brtcCode.equals("45") && info.getBrtcNm() != null && info.getBrtcNm().contains("전북")) return true;
+                            if (brtcCode.equals("46") && info.getBrtcNm() != null && info.getBrtcNm().contains("전남")) return true;
+                            if (brtcCode.equals("47") && info.getBrtcNm() != null && info.getBrtcNm().contains("경북")) return true;
+                            if (brtcCode.equals("48") && info.getBrtcNm() != null && info.getBrtcNm().contains("경남")) return true;
+                            if (brtcCode.equals("50") && info.getBrtcNm() != null && info.getBrtcNm().contains("제주")) return true;
+                            return false;
+                        })
+                        .collect(Collectors.toList());
+            } else {
+                // 구/시 단위 필터링
+                allHousingInfo = housingInfoRepository.findAll().stream()
+                        .filter(info -> {
+                            String signguCode = getSignguCode(info);
+                            return signguCode != null && regionCodes.contains(signguCode);
+                        })
+                        .collect(Collectors.toList());
+            }
+            log.info("권역 '{}'에 해당하는 주거정보: {}건 조회 완료", region, allHousingInfo.size());
+
+            if (allHousingInfo.isEmpty()) {
+                log.warn("필터링된 주거정보가 없습니다.");
+                return new RecommendationResponse(List.of());
+            }
+
+            log.info("필터링된 주거정보: {}건", allHousingInfo.size());
+
+            // HousingInfo 엔티티를 Map으로 변환 (AI API에 전달하기 위해)
+            List<Map<String, Object>> housingDataList = allHousingInfo.stream()
+                    .map(this::convertToMap)
+                    .collect(Collectors.toList());
+
+            // AI API 호출하여 추천 받기
+            List<UpstageAiService.RecommendationResult> recommendationResults = 
+                    upstageAiService.getRecommendations(userPrompt, housingDataList);
+
+            log.info("AI 추천 결과: {}건 추천됨", recommendationResults.size());
+
+            // 추천된 hsmpSn으로 HousingInfo 조회 및 순서 유지
+            Map<String, HousingInfo> housingInfoMap = allHousingInfo.stream()
+                    .collect(Collectors.toMap(
+                            HousingInfo::getHsmpSn,
+                            info -> info,
+                            (existing, replacement) -> existing
+                    ));
+
+            List<RecommendationResponse.HousingRecommendation> recommendations = new ArrayList<>();
+            for (int i = 0; i < recommendationResults.size() && i < 5; i++) {
+                UpstageAiService.RecommendationResult result = recommendationResults.get(i);
+                HousingInfo housingInfo = housingInfoMap.get(result.getHsmpSn());
+                
+                if (housingInfo != null) {
+                    recommendations.add(new RecommendationResponse.HousingRecommendation(
+                            i + 1,
+                            housingInfo,
+                            result.getReason()
+                    ));
+                }
+            }
+
+            log.info("최종 추천 결과: {}건 반환", recommendations.size());
+            return new RecommendationResponse(recommendations);
+
+        } catch (Exception e) {
+            log.error("AI 추천 처리 중 오류 발생", e);
+            throw new RuntimeException("AI 추천 서비스 처리 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    
+    /**
+     * 권역 선택에 따라 해당하는 구/시 코드 목록 반환
+     */
+    private List<String> getRegionCodes(String region) {
+        if (region == null || region.trim().isEmpty()) {
+            return List.of();
+        }
+        
+        Map<String, List<String>> regionMap = new HashMap<>();
+        
+        // 서울 권역
+        regionMap.put("서울_강남권", List.of("680", "650", "710", "740")); // 강남구, 서초구, 송파구, 강동구
+        regionMap.put("서울_도심권", List.of("110", "140", "170")); // 종로구, 중구, 용산구
+        regionMap.put("서울_동북권", List.of("200", "215", "230", "260", "290", "305", "320", "350")); // 성동구, 광진구, 동대문구, 중랑구, 성북구, 강북구, 도봉구, 노원구
+        regionMap.put("서울_서북권", List.of("380", "410", "440")); // 은평구, 서대문구, 마포구
+        regionMap.put("서울_서남권", List.of("470", "500", "530", "545", "560", "590", "620")); // 양천구, 강서구, 구로구, 금천구, 영등포구, 동작구, 관악구
+        
+        // 경기도 권역
+        regionMap.put("경기_남부핵심권", List.of("111", "147", "157", "137", "123")); // 수원, 용인, 화성, 오산, 평택
+        regionMap.put("경기_북부", List.of("129", "149", "115", "161", "125")); // 고양, 파주, 의정부, 양주, 동두천
+        regionMap.put("경기_동부", List.of("113", "159", "145", "135", "153", "165")); // 성남, 광주(경기), 하남, 남양주, 안성, 여주
+        regionMap.put("경기_서부", List.of("119", "155", "139", "127")); // 부천, 김포, 시흥, 안산
+        regionMap.put("경기_중부", List.of("117", "141", "131", "143")); // 안양, 군포, 과천, 의왕
+        regionMap.put("경기_북동부", List.of("133", "163")); // 구리, 포천
+        regionMap.put("경기_남서부", List.of("123", "153")); // 평택, 안성 + 화성 남부
+        
+        // 부산 권역
+        regionMap.put("부산_동부해안권", List.of("350", "500", "290")); // 해운대구, 수영구, 남구
+        regionMap.put("부산_서부권", List.of("380", "140", "200", "110")); // 사하구, 서구, 영도구, 중구
+        regionMap.put("부산_북부권", List.of("320", "440", "410")); // 북구, 강서구, 금정구
+        regionMap.put("부산_중부상업권", List.of("230", "260", "470", "530")); // 부산진구, 동래구, 연제구, 사상구
+        
+        // 나머지 광역시/도 (전체 포함)
+        regionMap.put("인천", List.of("28")); // 인천 전체
+        regionMap.put("대구", List.of("27")); // 대구 전체
+        regionMap.put("광주", List.of("29")); // 광주 전체
+        regionMap.put("대전", List.of("30")); // 대전 전체
+        regionMap.put("울산", List.of("31")); // 울산 전체
+        regionMap.put("세종", List.of("36")); // 세종 전체
+        regionMap.put("강원", List.of("42")); // 강원 전체
+        regionMap.put("충북", List.of("43")); // 충북 전체
+        regionMap.put("충남", List.of("44")); // 충남 전체
+        regionMap.put("전북", List.of("45")); // 전북 전체
+        regionMap.put("전남", List.of("46")); // 전남 전체
+        regionMap.put("경북", List.of("47")); // 경북 전체
+        regionMap.put("경남", List.of("48")); // 경남 전체
+        regionMap.put("제주", List.of("50")); // 제주 전체
+        
+        return regionMap.getOrDefault(region, List.of());
+    }
+    
+    /**
+     * HousingInfo에서 시군구 코드 추출
+     * signguNm에서 코드를 추출하거나, brtcNm과 signguNm 조합으로 판단
+     */
+    private String getSignguCode(HousingInfo info) {
+        // 서울의 경우
+        if (info.getBrtcNm() != null && info.getBrtcNm().contains("서울")) {
+            String signguNm = info.getSignguNm();
+            if (signguNm == null) return null;
+            
+            // 서울 구별 코드 매핑
+            Map<String, String> seoulCodeMap = new HashMap<>();
+            seoulCodeMap.put("강남구", "680");
+            seoulCodeMap.put("서초구", "650");
+            seoulCodeMap.put("송파구", "710");
+            seoulCodeMap.put("강동구", "740");
+            seoulCodeMap.put("종로구", "110");
+            seoulCodeMap.put("중구", "140");
+            seoulCodeMap.put("용산구", "170");
+            seoulCodeMap.put("성동구", "200");
+            seoulCodeMap.put("광진구", "215");
+            seoulCodeMap.put("동대문구", "230");
+            seoulCodeMap.put("중랑구", "260");
+            seoulCodeMap.put("성북구", "290");
+            seoulCodeMap.put("강북구", "305");
+            seoulCodeMap.put("도봉구", "320");
+            seoulCodeMap.put("노원구", "350");
+            seoulCodeMap.put("은평구", "380");
+            seoulCodeMap.put("서대문구", "410");
+            seoulCodeMap.put("마포구", "440");
+            seoulCodeMap.put("양천구", "470");
+            seoulCodeMap.put("강서구", "500");
+            seoulCodeMap.put("구로구", "530");
+            seoulCodeMap.put("금천구", "545");
+            seoulCodeMap.put("영등포구", "560");
+            seoulCodeMap.put("동작구", "590");
+            seoulCodeMap.put("관악구", "620");
+            return seoulCodeMap.get(signguNm);
+        }
+        
+        // 부산의 경우
+        if (info.getBrtcNm() != null && info.getBrtcNm().contains("부산")) {
+            String signguNm = info.getSignguNm();
+            if (signguNm == null) return null;
+            
+            Map<String, String> busanCodeMap = new HashMap<>();
+            busanCodeMap.put("해운대구", "350");
+            busanCodeMap.put("수영구", "500");
+            busanCodeMap.put("남구", "290");
+            busanCodeMap.put("사하구", "380");
+            busanCodeMap.put("서구", "140");
+            busanCodeMap.put("영도구", "200");
+            busanCodeMap.put("중구", "110");
+            busanCodeMap.put("북구", "320");
+            busanCodeMap.put("강서구", "440");
+            busanCodeMap.put("금정구", "410");
+            busanCodeMap.put("부산진구", "230");
+            busanCodeMap.put("동래구", "260");
+            busanCodeMap.put("연제구", "470");
+            busanCodeMap.put("사상구", "530");
+            return busanCodeMap.get(signguNm);
+        }
+        
+        // 경기도의 경우 (시 단위)
+        if (info.getBrtcNm() != null && info.getBrtcNm().contains("경기")) {
+            String signguNm = info.getSignguNm();
+            if (signguNm == null) return null;
+            
+            Map<String, String> gyeonggiCodeMap = new HashMap<>();
+            gyeonggiCodeMap.put("수원시", "111");
+            gyeonggiCodeMap.put("용인시", "147");
+            gyeonggiCodeMap.put("화성시", "157");
+            gyeonggiCodeMap.put("오산시", "137");
+            gyeonggiCodeMap.put("평택시", "123");
+            gyeonggiCodeMap.put("고양시", "129");
+            gyeonggiCodeMap.put("파주시", "149");
+            gyeonggiCodeMap.put("의정부시", "115");
+            gyeonggiCodeMap.put("양주시", "161");
+            gyeonggiCodeMap.put("동두천시", "125");
+            gyeonggiCodeMap.put("성남시", "113");
+            gyeonggiCodeMap.put("광주시", "159");
+            gyeonggiCodeMap.put("하남시", "145");
+            gyeonggiCodeMap.put("남양주시", "135");
+            gyeonggiCodeMap.put("안성시", "153");
+            gyeonggiCodeMap.put("여주시", "165");
+            gyeonggiCodeMap.put("부천시", "119");
+            gyeonggiCodeMap.put("김포시", "155");
+            gyeonggiCodeMap.put("시흥시", "139");
+            gyeonggiCodeMap.put("안산시", "127");
+            gyeonggiCodeMap.put("안양시", "117");
+            gyeonggiCodeMap.put("군포시", "141");
+            gyeonggiCodeMap.put("과천시", "131");
+            gyeonggiCodeMap.put("의왕시", "143");
+            gyeonggiCodeMap.put("구리시", "133");
+            gyeonggiCodeMap.put("포천시", "163");
+            return gyeonggiCodeMap.get(signguNm);
+        }
+        
+        // 나머지는 null 반환 (광역시/도 전체는 brtcNm으로만 필터링)
+        return null;
+    }
+    
+    // HousingInfo 엔티티를 Map으로 변환 (필수 필드만 포함하여 토큰 수 절감)
+    private Map<String, Object> convertToMap(HousingInfo housingInfo) {
+        Map<String, Object> map = new LinkedHashMap<>();
+        map.put("hsmpSn", housingInfo.getHsmpSn());
+        map.put("brtcNm", housingInfo.getBrtcNm());
+        map.put("signguNm", housingInfo.getSignguNm());
+        map.put("hsmpNm", housingInfo.getHsmpNm());
+        // 주소는 길 수 있으므로 간단히만 포함
+        if (housingInfo.getRnAdres() != null && housingInfo.getRnAdres().length() > 50) {
+            map.put("rnAdres", housingInfo.getRnAdres().substring(0, 50) + "...");
+        } else {
+            map.put("rnAdres", housingInfo.getRnAdres());
+        }
+        map.put("houseTyNm", housingInfo.getHouseTyNm());
+        map.put("bassRentGtn", housingInfo.getBassRentGtn());
+        map.put("bassMtRntchrg", housingInfo.getBassMtRntchrg());
+        // 불필요한 필드는 제외하여 토큰 수 절감
+        // map.put("hshldCo", housingInfo.getHshldCo());
+        // map.put("suplyTyNm", housingInfo.getSuplyTyNm());
+        // map.put("suplyCmnuseAr", housingInfo.getSuplyCmnuseAr());
+        // map.put("bassCnvrsGtnLmt", housingInfo.getBassCnvrsGtnLmt());
+        return map;
+    }
+}
