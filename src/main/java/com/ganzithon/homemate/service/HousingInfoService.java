@@ -740,20 +740,20 @@ public class HousingInfoService {
                 allHousingInfo = housingInfoRepository.findAll().stream()
                         .filter(info -> {
                             // brtcNm에서 코드 추출 또는 직접 매칭
-                            if (brtcCode.equals("28") && info.getBrtcNm() != null && info.getBrtcNm().contains("인천")) return true;
-                            if (brtcCode.equals("27") && info.getBrtcNm() != null && info.getBrtcNm().contains("대구")) return true;
-                            if (brtcCode.equals("29") && info.getBrtcNm() != null && info.getBrtcNm().contains("광주")) return true;
-                            if (brtcCode.equals("30") && info.getBrtcNm() != null && info.getBrtcNm().contains("대전")) return true;
-                            if (brtcCode.equals("31") && info.getBrtcNm() != null && info.getBrtcNm().contains("울산")) return true;
-                            if (brtcCode.equals("36") && info.getBrtcNm() != null && info.getBrtcNm().contains("세종")) return true;
-                            if (brtcCode.equals("42") && info.getBrtcNm() != null && info.getBrtcNm().contains("강원")) return true;
-                            if (brtcCode.equals("43") && info.getBrtcNm() != null && info.getBrtcNm().contains("충북")) return true;
-                            if (brtcCode.equals("44") && info.getBrtcNm() != null && info.getBrtcNm().contains("충남")) return true;
-                            if (brtcCode.equals("45") && info.getBrtcNm() != null && info.getBrtcNm().contains("전북")) return true;
-                            if (brtcCode.equals("46") && info.getBrtcNm() != null && info.getBrtcNm().contains("전남")) return true;
-                            if (brtcCode.equals("47") && info.getBrtcNm() != null && info.getBrtcNm().contains("경북")) return true;
-                            if (brtcCode.equals("48") && info.getBrtcNm() != null && info.getBrtcNm().contains("경남")) return true;
-                            if (brtcCode.equals("50") && info.getBrtcNm() != null && info.getBrtcNm().contains("제주")) return true;
+                            if (brtcCode.equals("28") && info.getBrtcNm() != null && info.getBrtcNm().contains("인천광역시")) return true;
+                            if (brtcCode.equals("27") && info.getBrtcNm() != null && info.getBrtcNm().contains("대구광역시")) return true;
+                            if (brtcCode.equals("29") && info.getBrtcNm() != null && info.getBrtcNm().contains("광주광역시")) return true;
+                            if (brtcCode.equals("30") && info.getBrtcNm() != null && info.getBrtcNm().contains("대전광역시")) return true;
+                            if (brtcCode.equals("31") && info.getBrtcNm() != null && info.getBrtcNm().contains("울산광역시")) return true;
+                            if (brtcCode.equals("36") && info.getBrtcNm() != null && info.getBrtcNm().contains("세종특별자치도")) return true;
+                            if (brtcCode.equals("42") && info.getBrtcNm() != null && info.getBrtcNm().contains("강원도")) return true;
+                            if (brtcCode.equals("43") && info.getBrtcNm() != null && info.getBrtcNm().contains("충청북도")) return true;
+                            if (brtcCode.equals("44") && info.getBrtcNm() != null && info.getBrtcNm().contains("충청남도")) return true;
+                            if (brtcCode.equals("45") && info.getBrtcNm() != null && info.getBrtcNm().contains("전라북도")) return true;
+                            if (brtcCode.equals("46") && info.getBrtcNm() != null && info.getBrtcNm().contains("전라남도")) return true;
+                            if (brtcCode.equals("47") && info.getBrtcNm() != null && info.getBrtcNm().contains("경상북도")) return true;
+                            if (brtcCode.equals("48") && info.getBrtcNm() != null && info.getBrtcNm().contains("경상남도")) return true;
+                            if (brtcCode.equals("50") && info.getBrtcNm() != null && info.getBrtcNm().contains("제주특별자치도")) return true;
                             return false;
                         })
                         .collect(Collectors.toList());
@@ -851,20 +851,20 @@ public class HousingInfoService {
         regionMap.put("부산_중부상업권", List.of("230", "260", "470", "530")); // 부산진구, 동래구, 연제구, 사상구
         
         // 나머지 광역시/도 (전체 포함)
-        regionMap.put("인천", List.of("28")); // 인천 전체
-        regionMap.put("대구", List.of("27")); // 대구 전체
-        regionMap.put("광주", List.of("29")); // 광주 전체
-        regionMap.put("대전", List.of("30")); // 대전 전체
-        regionMap.put("울산", List.of("31")); // 울산 전체
-        regionMap.put("세종", List.of("36")); // 세종 전체
-        regionMap.put("강원", List.of("42")); // 강원 전체
-        regionMap.put("충북", List.of("43")); // 충북 전체
-        regionMap.put("충남", List.of("44")); // 충남 전체
-        regionMap.put("전북", List.of("45")); // 전북 전체
-        regionMap.put("전남", List.of("46")); // 전남 전체
-        regionMap.put("경북", List.of("47")); // 경북 전체
-        regionMap.put("경남", List.of("48")); // 경남 전체
-        regionMap.put("제주", List.of("50")); // 제주 전체
+        regionMap.put("인천광역시", List.of("28")); // 인천 전체
+        regionMap.put("대구광역시", List.of("27")); // 대구 전체
+        regionMap.put("광주광역시", List.of("29")); // 광주 전체
+        regionMap.put("대전광역시", List.of("30")); // 대전 전체
+        regionMap.put("울산광역시", List.of("31")); // 울산 전체
+        regionMap.put("세종특별자치도", List.of("36")); // 세종 전체
+        regionMap.put("강원도", List.of("42")); // 강원 전체
+        regionMap.put("충청북도", List.of("43")); // 충북 전체
+        regionMap.put("충청남도", List.of("44")); // 충남 전체
+        regionMap.put("전라북도", List.of("45")); // 전북 전체
+        regionMap.put("전라남도", List.of("46")); // 전남 전체
+        regionMap.put("경상북도", List.of("47")); // 경북 전체
+        regionMap.put("경상남도", List.of("48")); // 경남 전체
+        regionMap.put("제주특별자치도", List.of("50")); // 제주 전체
         
         return regionMap.getOrDefault(region, List.of());
     }
