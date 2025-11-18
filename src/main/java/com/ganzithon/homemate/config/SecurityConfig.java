@@ -46,6 +46,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // 공개 엔드포인트
                         .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
+                        // 로그인한 사용자 공개 엔드포인트
+                        .requestMatchers("/api/posts/**").authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 // 401/403 응답을 명확하게
