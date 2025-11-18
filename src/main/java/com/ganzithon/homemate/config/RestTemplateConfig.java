@@ -51,7 +51,7 @@ public class RestTemplateConfig {
         };
         
         factory.setConnectTimeout(5000); // 5초
-        factory.setReadTimeout(10000); // 10초
+        factory.setReadTimeout(60000); // 60초
 
         return new RestTemplate(factory);
     }
