@@ -3,12 +3,14 @@ package com.ganzithon.homemate.entity;
 import com.ganzithon.homemate.dto.LoginResponse;
 import com.ganzithon.homemate.jwt.JwtTokenProvider;
 import com.ganzithon.homemate.security.UserPrincipal;
+import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.Map;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -23,6 +25,18 @@ public class User {
     @Embedded
     private UserAccount account;
 
+    @Column(name = "desired_area", length = 100)
+    private String desiredArea;
+
+    @Column(name = "desired_move_in_date")
+    private LocalDate desiredMoveInDate;
+
+    @Column(name = "introduction", length = 500)
+    private String introduction;
+
+    @Column(name = "profile_image_path", length = 500)
+    private String profileImagePath;
+
     protected User() {
     }
 
@@ -36,6 +50,15 @@ public class User {
 
     public boolean hasId(Long targetId) {
         return id != null && id.equals(targetId);
+    }
+
+    public void updateProfile(String desiredArea, LocalDate desiredMoveInDate, String introduction, String profileImagePath) {
+        this.desiredArea = desiredArea;
+        this.desiredMoveInDate = desiredMoveInDate;
+        this.introduction = introduction;
+        if (profileImagePath != null && !profileImagePath.isEmpty()) {
+            this.profileImagePath = profileImagePath;
+        }
     }
 
     public void verifyPassword(PasswordEncoder encoder, String rawPassword) {
@@ -61,6 +84,30 @@ public class User {
     public UserPrincipal toPrincipal() {
         requirePersisted();
         return UserPrincipal.create(id, account.loginIdValue(), account.encodedPassword());
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getLoginId() {
+        return account.loginIdValue();
+    }
+
+    public String getDesiredArea() {
+        return desiredArea;
+    }
+
+    public LocalDate getDesiredMoveInDate() {
+        return desiredMoveInDate;
+    }
+
+    public String getIntroduction() {
+        return introduction;
+    }
+
+    public String getProfileImagePath() {
+        return profileImagePath;
     }
 
     private void requirePersisted() {
