@@ -1,6 +1,5 @@
 package com.ganzithon.homemate.dto;
 
-import com.ganzithon.homemate.entity.HousingInfo;
 import java.util.List;
 
 public record RecommendationResponse(
@@ -8,8 +7,20 @@ public record RecommendationResponse(
 ) {
     public record HousingRecommendation(
         Integer rank,
-        HousingInfo housingInfo,
+        HousingInfoDto housingInfo,
         String reason
+    ) {
+    }
+    
+    public record HousingInfoDto(
+        Long id,
+        String hsmpSn,
+        String brtcNm,
+        String signguNm,
+        String hsmpNm,
+        Integer hshldCo,
+        Long bassRentGtn,
+        Long bassMtRntchrg
     ) {
     }
 }

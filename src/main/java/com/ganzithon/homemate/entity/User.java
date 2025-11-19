@@ -61,6 +61,10 @@ public class User {
         }
     }
 
+    public void updateProfileImagePath(String profileImagePath) {
+        this.profileImagePath = profileImagePath;
+    }
+
     public void verifyPassword(PasswordEncoder encoder, String rawPassword) {
         if (account.matchesPassword(encoder, rawPassword)) {
             return;
