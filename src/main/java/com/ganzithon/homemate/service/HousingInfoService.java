@@ -862,10 +862,8 @@ public class HousingInfoService {
 
     // ========== 헬퍼 메서드: Region 코드 처리 ==========
     
-    /**
-     * region 이름에서 brtcNm 추출
-     * 예: "서울_강남권" -> "서울특별시", "충북_청주시" -> "충청북도"
-     */
+    // region 이름에서 brtcNm 추출
+    // 예: "서울_강남권" -> "서울특별시", "충북_청주시" -> "충청북도"
     private String extractBrtcNmFromRegion(String region) {
         if (region == null || region.isEmpty()) {
             return null;
@@ -912,10 +910,8 @@ public class HousingInfoService {
         return null;
     }
     
-    /**
-     * region과 code로 signguNm 추출
-     * 예: region="서울_강남구,서초구", code="680" -> "강남구"
-     */
+    // region과 code로 signguNm 추출
+    // 예: region="서울_강남구,서초구", code="680" -> "강남구"
     private String getSignguNmFromCodeByRegion(String region, String code) {
         if (region == null || code == null) {
             return null;
@@ -949,11 +945,9 @@ public class HousingInfoService {
         return null;
     }
     
-    /**
-     * region 이름에서 signguNm 목록 추출
-     * 예: "서울_강남구,서초구" -> ["강남구", "서초구"]
-     * 예: "경기_수원시,성남시" -> ["수원시", "성남시"]
-     */
+    // region 이름에서 signguNm 목록 추출
+    // 예: "서울_강남구,서초구" -> ["강남구", "서초구"]
+    // 예: "경기_수원시,성남시" -> ["수원시", "성남시"]
     private List<String> extractSignguNmsFromRegion(String region) {
         if (region == null || region.isEmpty()) {
             return List.of();
@@ -977,11 +971,9 @@ public class HousingInfoService {
                 .collect(Collectors.toList());
     }
     
-    /**
-     * region별 코드 목록 반환
-     * region 이름에서 직접 signguNm을 추출하고, 이를 코드로 변환
-     * 예: "서울_강남구,서초구" -> ["680", "650"]
-     */
+    // region별 코드 목록 반환
+    // region 이름에서 직접 signguNm을 추출하고, 이를 코드로 변환
+    // 예: "서울_강남구,서초구" -> ["680", "650"]
     private List<String> getRegionCodes(String region) {
         if (region == null || region.isEmpty()) {
             return List.of();
@@ -1031,10 +1023,8 @@ public class HousingInfoService {
         return codes;
     }
     
-    /**
-     * region과 signguNm으로 코드 추출 (역방향 매핑)
-     * 예: region="서울_강남구,서초구", signguNm="강남구" -> "680"
-     */
+    // region과 signguNm으로 코드 추출 (역방향 매핑)
+    // 예: region="서울_강남구,서초구", signguNm="강남구" -> "680"
     private String getCodeFromSignguNmByRegion(String region, String signguNm) {
         if (region == null || signguNm == null) {
             return null;
@@ -1273,9 +1263,7 @@ public class HousingInfoService {
         return nameMap.get(signguNm);
     }
     
-    /**
-     * region과 regionCodes로 주거정보 조회
-     */
+    // region과 regionCodes로 주거정보 조회
     private List<HousingInfo> getHousingInfoByRegionCodes(String region, List<String> regionCodes) {
         String brtcNm = extractBrtcNmFromRegion(region);
         if (brtcNm == null) {
@@ -1303,9 +1291,7 @@ public class HousingInfoService {
         return housingInfoRepository.findByBrtcNmAndSignguNmIn(brtcNm, signguNms);
     }
     
-    /**
-     * 코드로 brtcNm 반환
-     */
+    // 코드로 brtcNm 반환
     private String getBrtcNmFromCode(String code) {
         Map<String, String> codeMap = new HashMap<>();
         codeMap.put("11", "서울특별시");
@@ -1328,9 +1314,7 @@ public class HousingInfoService {
         return codeMap.get(code);
     }
     
-    /**
-     * HousingInfo를 Map으로 변환 (AI 전송용, 최소 필드만)
-     */
+    // HousingInfo를 Map으로 변환 (AI 전송용, 최소 필드만)
     private Map<String, Object> convertToMap(HousingInfo info) {
         Map<String, Object> map = new LinkedHashMap<>(4);
         map.put("hsmpSn", info.getHsmpSn());
@@ -1534,10 +1518,8 @@ public class HousingInfoService {
         return codeMap.get(code);
     }
     
-    /**
-     * 사용 가능한 모든 region 목록 반환 (드롭다운용)
-     * 형식: [{"label": "서울 / 중구", "value": "서울_중구"}, ...]
-     */
+    // 사용 가능한 모든 region 목록 반환 (드롭다운용)
+    // 형식: [{"label": "서울 / 중구", "value": "서울_중구"}, ...]
     public List<Map<String, String>> getAvailableRegions() {
         List<Map<String, String>> regions = new ArrayList<>();
         
@@ -1685,10 +1667,8 @@ public class HousingInfoService {
     
     // ========== 새로운 드롭다운 방식 API 메서드 ==========
     
-    /**
-     * 광역시/도 목록 반환 (상위 드롭다운용)
-     * 형식: [{"value": "서울", "label": "서울특별시"}, ...]
-     */
+    // 광역시/도 목록 반환 (상위 드롭다운용)
+    // 형식: [{"value": "서울", "label": "서울특별시"}, ...]
     public List<Map<String, String>> getSidoList() {
         List<Map<String, String>> sidoList = new ArrayList<>();
         sidoList.add(createSidoMap("서울", "서울특별시"));
@@ -1713,11 +1693,9 @@ public class HousingInfoService {
         return map;
     }
     
-    /**
-     * 특정 광역시/도의 시/군/구 목록 반환 (하위 드롭다운용)
-     * 형식: [{"value": "중구", "label": "중구"}, {"value": "종로구", "label": "종로구"}, ...]
-     * @throws IllegalArgumentException sido가 유효하지 않은 경우
-     */
+    // 특정 광역시/도의 시/군/구 목록 반환 (하위 드롭다운용)
+    // 형식: [{"value": "중구", "label": "중구"}, {"value": "종로구", "label": "종로구"}, ...]
+    // @throws IllegalArgumentException sido가 유효하지 않은 경우
     public List<Map<String, String>> getDistrictsBySido(String sido) {
         List<Map<String, String>> districts = new ArrayList<>();
         
@@ -1758,9 +1736,7 @@ public class HousingInfoService {
         return districts;
     }
     
-    /**
-     * sido를 brtcNm으로 변환
-     */
+    // sido를 brtcNm으로 변환
     private String getBrtcNmFromSido(String sido) {
         Map<String, String> sidoMap = new HashMap<>();
         // 정식 이름만 지원
@@ -1784,11 +1760,9 @@ public class HousingInfoService {
         return sidoMap.get(sido);
     }
     
-    /**
-     * 새로운 추천 API (sido + districts 방식)
-     * sido와 districts를 조합해서 region 형식으로 변환 후 기존 getRecommendations 호출
-     * @throws IllegalArgumentException 검증 실패 시
-     */
+    // 새로운 추천 API (sido + districts 방식)
+    // sido와 districts를 조합해서 region 형식으로 변환 후 기존 getRecommendations 호출
+    // @throws IllegalArgumentException 검증 실패 시
     public RecommendationResponse getRecommendationsV2(String sido, List<String> districts, String prompt) {
         // sido 검증
         if (sido == null || sido.trim().isEmpty()) {
