@@ -44,6 +44,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 프리플라이트 전역 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        // 공개 엔드포인트
+                        .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
+                        // 로그인한 사용자 공개 엔드포인트
+                        .requestMatchers("/api/posts/**").authenticated()
                         // 공개 엔드포인트 (더 구체적인 경로를 먼저)
                         .requestMatchers("/api/auth/**", "/api/housing/**", "/h2-console/**", "/error").permitAll()
                         // 프로필 이미지 조회는 공개
