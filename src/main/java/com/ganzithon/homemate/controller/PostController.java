@@ -17,6 +17,7 @@ import com.ganzithon.homemate.dto.PageResponse;
 import com.ganzithon.homemate.dto.PostListItemResponse;
 import com.ganzithon.homemate.dto.SearchType;
 import com.ganzithon.homemate.dto.ApiResponse;
+import com.ganzithon.homemate.dto.HomePostsResponse;
 
 
 import jakarta.validation.Valid;
@@ -29,6 +30,8 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+
+
 
 @RestController
 @RequestMapping("/api/posts")
@@ -312,5 +315,27 @@ public class PostController {
         ApiResponse<Void> body = new ApiResponse<>("댓글이 삭제되었습니다.");
         return ResponseEntity.ok(body);
     }
+
+    // ========================================
+    // 메인 페이지용 최신 글 2개씩
+    // GET /api/posts/main
+    // ========================================
+    @GetMapping("/main")
+    public ResponseEntity<HomePostsResponse> getMainPosts() {
+
+        // 각 게시판마다 최신순 2개만
+        Page<PostListItemResponse> roommatePage = roommatePostService.getList(0, 2);
+        Page<PostListItemResponse> freePage      = freePostService.getList(0, 2);
+        Page<PostListItemResponse> policyPage    = policyPostService.getList(0, 2);
+
+        HomePostsResponse body = new HomePostsResponse(
+                roommatePage.getContent(),
+                freePage.getContent(),
+                policyPage.getContent()
+        );
+
+        return ResponseEntity.ok(body);
+    }
+
 }
 
