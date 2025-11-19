@@ -21,12 +21,12 @@ public class CreatePostRequest {
     private String content;
 
 
-    @NotBlank
-    private String sidoCode; //추후 프론트 입력이 확정되면 코드 수정
+    @Size(max = 10)
+    private String sidoCode;    // ROOMMATE/FREE에서만 사용
 
 
-    @NotBlank
-    private String sigunguCode; //추후 프론트 입력이 확정되면 코드 수정
+    @Size(max = 10)
+    private String sigunguCode; // ROOMMATE/FREE에서만 사용
 
 
     // ROOMMATE일 때만 필수, FREE/POLICY는 null 허용

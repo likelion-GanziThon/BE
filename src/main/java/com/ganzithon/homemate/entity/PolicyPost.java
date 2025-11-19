@@ -44,11 +44,11 @@ public class PolicyPost {
     private String content;
 
 
-    @Column(length = 10, nullable = false)
+    @Column(length = 10)
     private String sidoCode;
 
 
-    @Column(length = 10, nullable = false)
+    @Column(length = 10)
     private String sigunguCode;
 
 

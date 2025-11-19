@@ -5,6 +5,8 @@ import com.ganzithon.homemate.dto.UpdatePostRequest;
 import com.ganzithon.homemate.dto.PostCategory;
 import com.ganzithon.homemate.dto.PostListItemResponse;
 import com.ganzithon.homemate.dto.PostDetailResponse;
+import com.ganzithon.homemate.dto.SearchType;
+
 
 import com.ganzithon.homemate.entity.FreePost;
 import com.ganzithon.homemate.entity.FreePostImage;
@@ -40,6 +42,7 @@ public class FreePostService {
     private final FreePostImageRepository freePostImageRepository;
     private final ImageStorage imageStorage;
     private final CommentService commentService;
+    private final PostLikeService postLikeService;
 
     // 다른 게시판들
     private final RoommatePostRepository roommatePostRepository;
@@ -52,6 +55,7 @@ public class FreePostService {
             FreePostImageRepository freePostImageRepository,
             ImageStorage imageStorage,
             CommentService commentService,
+            PostLikeService postLikeService,
             RoommatePostRepository roommatePostRepository,
             RoommatePostImageRepository roommatePostImageRepository,
             PolicyPostRepository policyPostRepository,
@@ -61,6 +65,7 @@ public class FreePostService {
         this.freePostImageRepository = freePostImageRepository;
         this.imageStorage = imageStorage;
         this.commentService = commentService;
+        this.postLikeService = postLikeService;
         this.roommatePostRepository = roommatePostRepository;
         this.roommatePostImageRepository = roommatePostImageRepository;
         this.policyPostRepository = policyPostRepository;
@@ -69,12 +74,15 @@ public class FreePostService {
 
     // ========================================
     // CREATE
+    // FREE: 제목/내용/지역 필수
     // ========================================
     @Transactional
     public void create(Long userId, CreatePostRequest req, List<MultipartFile> images) {
 
+        validateTextFieldsForCreate(req.getTitle(), req.getContent(), req.getSidoCode(), req.getSigunguCode());
+
         FreePost post = FreePost.create(userId, req);
-        freePostRepository.save(post);
+        freePostRepository.save(post);  // ★ 먼저 저장
 
         if (images != null) {
             int order = 0;
@@ -100,7 +108,7 @@ public class FreePostService {
             throw new AccessDeniedException("본인 게시글만 수정할 수 있습니다.");
         }
 
-        // 텍스트 검증 (openchatUrl 없음)
+        // FREE 안에서 수정: 제목/내용/지역 필수
         validateTextFields(req);
 
         // 텍스트 전체 덮어쓰기
@@ -135,6 +143,7 @@ public class FreePostService {
 
     // ========================================
     // UPDATE + CATEGORY MOVE (FREE → 다른 게시판)
+    // 좋아요/댓글 동반 이동
     // ========================================
     @Transactional
     public void moveToAnotherCategory(
@@ -151,27 +160,60 @@ public class FreePostService {
             throw new AccessDeniedException("본인 게시글만 수정할 수 있습니다.");
         }
 
+        // 카테고리 안 바뀌는 경우 → 기존 update 로직 사용
         if (targetCategory == null || targetCategory == PostCategory.FREE) {
-            // 목표 카테고리가 FREE이면 그냥 기존 update 로직 사용
             update(userId, postId, req, images);
             return;
         }
 
-        // 텍스트 검증
-        validateTextFields(req);
+        // 1) 텍스트 검증
+        validateTextFields(req); // 제목/내용/지역 필수 체크
 
-        // 기존 FREE 이미지 목록 (나중에 복사에 사용할 수 있음)
+        // 2) 기존 FREE 이미지들 파일만 삭제 (DB row는 cascade로 삭제하게 놔둠)
         List<FreePostImage> oldImages = freePostImageRepository.findByPost(post);
+        for (FreePostImage img : oldImages) {
+            String url = img.getUrl();
+            if (StringUtils.hasText(url)) {
+                imageStorage.deleteFreeImage(url); // 스토리지 파일 삭제
+            }
+        }
+        // freePostImageRepository.deleteAllInBatch(oldImages);  // ← 굳이 안 지워도 됨 (cascade)
 
+        // 3) 타겟 게시판용 CreatePostRequest 만들기
+        CreatePostRequest createReq = toCreatePostRequest(req, targetCategory);
+
+        // 4) 타겟 게시판에 새 글 + 새 이미지 생성
+        Long newPostId;
         switch (targetCategory) {
-            case ROOMMATE -> moveFreeToRoommate(userId, post, req, images, oldImages);
-            case POLICY   -> moveFreeToPolicy(userId, post, req, images, oldImages);
-            default       -> throw new IllegalArgumentException("지원하지 않는 카테고리입니다: " + targetCategory);
+            case ROOMMATE -> {
+                RoommatePost newPost = moveFreeToRoommate(userId, createReq, images);
+                newPostId = newPost.getId();
+            }
+            case POLICY -> {
+                PolicyPost newPost = moveFreeToPolicy(userId, createReq, images);
+                newPostId = newPost.getId();
+            }
+            default -> throw new IllegalArgumentException("지원하지 않는 카테고리입니다: " + targetCategory);
         }
 
-        // FREE 게시글 삭제 (cascade 로 이미지 row도 같이 삭제됨)
-        // 여기서는 스토리지 파일은 지우지 않는다. (새 글에서 같은 URL을 쓸 수 있으니까)
+        // 5) 댓글/좋아요 이동
+        commentService.moveAll(PostCategory.FREE, postId, targetCategory, newPostId);
+        postLikeService.moveAll(PostCategory.FREE, postId, targetCategory, newPostId);
+
+        // 6) 원본 FREE 게시글 row 삭제 (images는 cascade로 같이 삭제)
         freePostRepository.delete(post);
+    }
+
+    private void validateTextFieldsForCreate(String title, String content, String sidoCode, String sigunguCode) {
+        if (!StringUtils.hasText(title)) {
+            throw new IllegalArgumentException("제목은 필수입니다.");
+        }
+        if (!StringUtils.hasText(content)) {
+            throw new IllegalArgumentException("내용은 필수입니다.");
+        }
+        if (!StringUtils.hasText(sidoCode) || !StringUtils.hasText(sigunguCode)) {
+            throw new IllegalArgumentException("지역 정보는 필수입니다.");
+        }
     }
 
     private void validateTextFields(UpdatePostRequest req) {
@@ -200,80 +242,57 @@ public class FreePostService {
         createReq.setContent(req.getContent());
         createReq.setSidoCode(req.getSidoCode());
         createReq.setSigunguCode(req.getSigunguCode());
-        createReq.setOpenchatUrl(req.getOpenchatUrl()); // ROOMMATE 전용
+        createReq.setOpenchatUrl(req.getOpenchatUrl()); // ROOMMATE 전용 (FREE/POLICY는 무시)
         return createReq;
     }
 
-
-    // FREE → ROOMMATE 이동
-    private void moveFreeToRoommate(
+    // FREE → ROOMMATE 이동 시
+    private RoommatePost moveFreeToRoommate(
             Long userId,
-            FreePost original,
-            UpdatePostRequest req,
-            List<MultipartFile> newImages,
-            List<FreePostImage> oldImages
+            CreatePostRequest createReq,
+            List<MultipartFile> images
     ) {
-        CreatePostRequest createReq = toCreatePostRequest(req, PostCategory.ROOMMATE);
-
+        // ROOMMATE 새 글 생성
         RoommatePost roommatePost = RoommatePost.create(userId, createReq);
-        roommatePostRepository.save(roommatePost);
+        roommatePostRepository.save(roommatePost);  // ★ 먼저 저장
 
-        // 이미지
-        if (newImages != null && !newImages.isEmpty()) {
+        // 새 이미지 업로드 (있을 때만)
+        if (images != null && !images.isEmpty()) {
             int order = 0;
-            for (MultipartFile file : newImages) {
+            for (MultipartFile file : images) {
                 if (file == null || file.isEmpty()) continue;
 
-                // 지금은 일단 FREE와 같은 저장 메서드 재사용
-                String url = imageStorage.uploadFreeImage(file);
+                String url = imageStorage.uploadRoommateImage(roommatePost.getId(), order, file);
                 RoommatePostImage image = RoommatePostImage.of(roommatePost, url, order++);
                 roommatePostImageRepository.save(image);
             }
-        } else {
-            // 새 이미지가 없으면 기존 FREE 이미지 URL 복사
-            int order = 0;
-            for (FreePostImage oldImg : oldImages) {
-                String url = oldImg.getUrl();
-                if (!StringUtils.hasText(url)) continue;
-
-                RoommatePostImage copy = RoommatePostImage.of(roommatePost, url, order++);
-                roommatePostImageRepository.save(copy);
-            }
         }
+
+        return roommatePost;
     }
 
-    // FREE → POLICY 이동
-    private void moveFreeToPolicy(
+    // FREE → POLICY 이동 시
+    private PolicyPost moveFreeToPolicy(
             Long userId,
-            FreePost original,
-            UpdatePostRequest req,
-            List<MultipartFile> newImages,
-            List<FreePostImage> oldImages
+            CreatePostRequest createReq,
+            List<MultipartFile> images
     ) {
-        CreatePostRequest createReq = toCreatePostRequest(req, PostCategory.POLICY);
-
+        // POLICY 새 글 생성
         PolicyPost policyPost = PolicyPost.create(userId, createReq);
-        policyPostRepository.save(policyPost);
+        policyPostRepository.save(policyPost);  // ★ 먼저 저장
 
-        if (newImages != null && !newImages.isEmpty()) {
+        if (images != null && !images.isEmpty()) {
             int order = 0;
-            for (MultipartFile file : newImages) {
+            for (MultipartFile file : images) {
                 if (file == null || file.isEmpty()) continue;
 
-                String url = imageStorage.uploadFreeImage(file);
+                String url = imageStorage.uploadPolicyImage(policyPost.getId(), order, file);
                 PolicyPostImage image = PolicyPostImage.of(policyPost, url, order++);
                 policyPostImageRepository.save(image);
             }
-        } else {
-            int order = 0;
-            for (FreePostImage oldImg : oldImages) {
-                String url = oldImg.getUrl();
-                if (!StringUtils.hasText(url)) continue;
-
-                PolicyPostImage copy = PolicyPostImage.of(policyPost, url, order++);
-                policyPostImageRepository.save(copy);
-            }
         }
+
+        return policyPost;
     }
 
     // ========================================
@@ -324,6 +343,76 @@ public class FreePostService {
             return dto;
         });
     }
+
+    // ========================================
+    // SEARCH LIST (검색 + 지역 필터)
+    // ========================================
+    @Transactional(readOnly = true)
+    public Page<PostListItemResponse> searchList(
+            int page,
+            int size,
+            SearchType searchType,
+            String keyword,
+            String sidoCode,    // null 가능
+            String sigunguCode  // null 가능
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        boolean hasSido = StringUtils.hasText(sidoCode);
+        boolean hasSigungu = StringUtils.hasText(sigunguCode);
+
+        Page<FreePost> posts;
+
+        switch (searchType) {
+            case TITLE -> {
+                if (!hasSido) {
+                    posts = freePostRepository
+                            .findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(keyword, pageable);
+                } else if (!hasSigungu) {
+                    posts = freePostRepository
+                            .findByTitleContainingIgnoreCaseAndSidoCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, pageable
+                            );
+                } else {
+                    posts = freePostRepository
+                            .findByTitleContainingIgnoreCaseAndSidoCodeAndSigunguCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, sigunguCode, pageable
+                            );
+                }
+            }
+            case CONTENT -> {
+                if (!hasSido) {
+                    posts = freePostRepository
+                            .findByContentContainingOrderByCreatedAtDesc(keyword, pageable);
+                } else if (!hasSigungu) {
+                    posts = freePostRepository
+                            .findByContentContainingAndSidoCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, pageable
+                            );
+                } else {
+                    posts = freePostRepository
+                            .findByContentContainingAndSidoCodeAndSigunguCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, sigunguCode, pageable
+                            );
+                }
+            }
+
+            default -> throw new IllegalArgumentException("지원하지 않는 검색 타입입니다: " + searchType);
+        }
+
+        return posts.map(post -> {
+            PostListItemResponse dto = PostListItemResponse.fromFree(post);
+
+            long commentCount = commentService.getCommentCount(
+                    PostCategory.FREE,
+                    post.getId()
+            );
+            dto.setCommentCount(commentCount);
+
+            return dto;
+        });
+    }
+
 
     // ========================================
     // DETAIL (+ 조회수 증가)

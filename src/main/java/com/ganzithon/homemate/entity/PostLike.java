@@ -44,5 +44,10 @@ public class PostLike {
     public static PostLike create(PostCategory category, Long postId, Long userId) {
         return new PostLike(category, postId, userId);
     }
+
+    public void moveTo(PostCategory category, Long postId) {
+        this.category = category;
+        this.postId = postId;
+    }
 }
 

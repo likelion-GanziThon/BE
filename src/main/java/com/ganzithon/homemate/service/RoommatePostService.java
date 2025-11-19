@@ -5,6 +5,8 @@ import com.ganzithon.homemate.dto.UpdatePostRequest;
 import com.ganzithon.homemate.dto.PostCategory;
 import com.ganzithon.homemate.dto.PostListItemResponse;
 import com.ganzithon.homemate.dto.PostDetailResponse;
+import com.ganzithon.homemate.dto.SearchType;
+
 
 import com.ganzithon.homemate.entity.RoommatePost;
 import com.ganzithon.homemate.entity.RoommatePostImage;
@@ -40,6 +42,7 @@ public class RoommatePostService {
     private final RoommatePostImageRepository roommatePostImageRepository;
     private final ImageStorage imageStorage;
     private final CommentService commentService;
+    private final PostLikeService postLikeService;
 
     // 이동용(다른 게시판)
     private final FreePostRepository freePostRepository;
@@ -52,6 +55,7 @@ public class RoommatePostService {
             RoommatePostImageRepository roommatePostImageRepository,
             ImageStorage imageStorage,
             CommentService commentService,
+            PostLikeService postLikeService,
             FreePostRepository freePostRepository,
             FreePostImageRepository freePostImageRepository,
             PolicyPostRepository policyPostRepository,
@@ -61,6 +65,7 @@ public class RoommatePostService {
         this.roommatePostImageRepository = roommatePostImageRepository;
         this.imageStorage = imageStorage;
         this.commentService = commentService;
+        this.postLikeService = postLikeService;
         this.freePostRepository = freePostRepository;
         this.freePostImageRepository = freePostImageRepository;
         this.policyPostRepository = policyPostRepository;
@@ -69,24 +74,25 @@ public class RoommatePostService {
 
     // =======================
     // CREATE
+    // ROOMMATE: 제목/내용/지역 + openchatUrl 필수
     // =======================
     @Transactional
     public void create(Long userId, CreatePostRequest req, List<MultipartFile> images) {
-
-        // ROOMMATE 전용 필수 필드 체크
         validateTextFields(req.getTitle(), req.getContent(), req.getSidoCode(), req.getSigunguCode());
+
         if (!StringUtils.hasText(req.getOpenchatUrl())) {
             throw new IllegalArgumentException("ROOMMATE 게시판은 openchatUrl이 필수입니다.");
         }
 
         RoommatePost post = RoommatePost.create(userId, req);
-        roommatePostRepository.save(post);
+        roommatePostRepository.save(post); // ★ 먼저 저장
 
-        if (images != null) {
+        if (images != null && !images.isEmpty()) {
             int order = 0;
             for (MultipartFile file : images) {
                 if (file == null || file.isEmpty()) continue;
 
+                // 단순 업로드 버전 사용
                 String url = imageStorage.uploadRoommateImage(file);
                 RoommatePostImage image = RoommatePostImage.of(post, url, order++);
                 roommatePostImageRepository.save(image);
@@ -96,6 +102,7 @@ public class RoommatePostService {
 
     // =======================
     // UPDATE (ROOMMATE 내에서만)
+    // 제목/내용/지역 + openchatUrl 필수
     // =======================
     @Transactional
     public void update(Long userId, Long postId, UpdatePostRequest req, List<MultipartFile> images) {
@@ -106,6 +113,7 @@ public class RoommatePostService {
             throw new AccessDeniedException("본인 게시글만 수정할 수 있습니다.");
         }
 
+        // ROOMMATE 안에서 수정: 지역 + openchatUrl 필수
         validateTextFields(req.getTitle(), req.getContent(), req.getSidoCode(), req.getSigunguCode());
         if (!StringUtils.hasText(req.getOpenchatUrl())) {
             throw new IllegalArgumentException("ROOMMATE 게시판은 openchatUrl이 필수입니다.");
@@ -142,6 +150,7 @@ public class RoommatePostService {
     // =======================
     // UPDATE + CATEGORY MOVE
     // (ROOMMATE → FREE / POLICY)
+    // 좋아요/댓글 동반 이동
     // =======================
     @Transactional
     public void moveToAnotherCategory(
@@ -158,26 +167,48 @@ public class RoommatePostService {
             throw new AccessDeniedException("본인 게시글만 수정할 수 있습니다.");
         }
 
+        // 카테고리 그대로면 그냥 ROOMMATE 안에서 update
         if (targetCategory == null || targetCategory == PostCategory.ROOMMATE) {
-            // 그대로면 그냥 update
             update(userId, postId, req, images);
             return;
         }
 
-        // 텍스트는 항상 검증
+        // 다른 게시판으로 나갈 거라서 openchatUrl은 필수 X, 대신 공통 필드(제목/내용/지역)는 필수
         validateTextFields(req.getTitle(), req.getContent(), req.getSidoCode(), req.getSigunguCode());
 
-        // 기존 이미지들
+        // 1) 기존 ROOMMATE 이미지 파일 삭제
         List<RoommatePostImage> oldImages = roommatePostImageRepository.findByPost(post);
+        for (RoommatePostImage img : oldImages) {
+            String url = img.getUrl();
+            if (StringUtils.hasText(url)) {
+                imageStorage.deleteRoommateImage(url);
+            }
+        }
+        // roommatePostImageRepository.deleteAllInBatch(oldImages); // 게시글 삭제 시 cascade 로 정리해도 됨
 
+        // 2) 타겟 게시판용 CreatePostRequest 생성
+        CreatePostRequest createReq = toCreatePostRequest(req, targetCategory);
+
+        // 3) 타겟 게시판에 새 글 + 새 이미지 생성
+        Long newPostId;
         switch (targetCategory) {
-            case FREE   -> moveRoommateToFree(userId, post, req, images, oldImages);
-            case POLICY -> moveRoommateToPolicy(userId, post, req, images, oldImages);
-            default     -> throw new IllegalArgumentException("지원하지 않는 카테고리입니다: " + targetCategory);
+            case FREE -> {
+                FreePost newPost = moveRoommateToFree(userId, createReq, images);
+                newPostId = newPost.getId();
+            }
+            case POLICY -> {
+                PolicyPost newPost = moveRoommateToPolicy(userId, createReq, images);
+                newPostId = newPost.getId();
+            }
+            default -> throw new IllegalArgumentException("지원하지 않는 카테고리입니다: " + targetCategory);
         }
 
-        // 원본 삭제
-        deleteRoommatePostWithImages(post, oldImages);
+        // 4) 댓글/좋아요 이동
+        commentService.moveAll(PostCategory.ROOMMATE, postId, targetCategory, newPostId);
+        postLikeService.moveAll(PostCategory.ROOMMATE, postId, targetCategory, newPostId);
+
+        // 5) 원본 ROOMMATE 글 삭제
+        roommatePostRepository.delete(post);
     }
 
     private void validateTextFields(String title, String content, String sidoCode, String sigunguCode) {
@@ -193,7 +224,7 @@ public class RoommatePostService {
     }
 
     private CreatePostRequest toCreatePostRequest(UpdatePostRequest req, PostCategory targetCategory) {
-        // ROOMMATE로 이동할 땐 openchatUrl 필수
+        // 혹시 나중에 ROOMMATE → ROOMMATE 같은 이동 지원할 때 대비
         if (targetCategory == PostCategory.ROOMMATE &&
                 !StringUtils.hasText(req.getOpenchatUrl())) {
             throw new IllegalArgumentException("ROOMMATE 게시판으로 이동할 때는 openchatUrl이 필수입니다.");
@@ -205,87 +236,52 @@ public class RoommatePostService {
         createReq.setContent(req.getContent());
         createReq.setSidoCode(req.getSidoCode());
         createReq.setSigunguCode(req.getSigunguCode());
-        createReq.setOpenchatUrl(req.getOpenchatUrl());
+        createReq.setOpenchatUrl(req.getOpenchatUrl()); // FREE/POLICY 에선 무시
         return createReq;
     }
 
     // ROOMMATE → FREE
-    private void moveRoommateToFree(
+    private FreePost moveRoommateToFree(
             Long userId,
-            RoommatePost original,
-            UpdatePostRequest req,
-            List<MultipartFile> newImages,
-            List<RoommatePostImage> oldImages
+            CreatePostRequest createReq,
+            List<MultipartFile> images
     ) {
-        CreatePostRequest createReq = toCreatePostRequest(req, PostCategory.FREE);
-
         FreePost freePost = FreePost.create(userId, createReq);
         freePostRepository.save(freePost);
 
-        if (newImages != null && !newImages.isEmpty()) {
+        if (images != null && !images.isEmpty()) {
             int order = 0;
-            for (MultipartFile file : newImages) {
+            for (MultipartFile file : images) {
                 if (file == null || file.isEmpty()) continue;
 
-                String url = imageStorage.uploadFreeImage(file);
+                String url = imageStorage.uploadFreeImage(freePost.getId(), order, file);
                 FreePostImage image = FreePostImage.of(freePost, url, order++);
                 freePostImageRepository.save(image);
             }
-        } else {
-            int order = 0;
-            for (RoommatePostImage oldImg : oldImages) {
-                String url = oldImg.getUrl();
-                if (!StringUtils.hasText(url)) continue;
-
-                FreePostImage copy = FreePostImage.of(freePost, url, order++);
-                freePostImageRepository.save(copy);
-            }
         }
+        return freePost;
     }
 
     // ROOMMATE → POLICY
-    private void moveRoommateToPolicy(
+    private PolicyPost moveRoommateToPolicy(
             Long userId,
-            RoommatePost original,
-            UpdatePostRequest req,
-            List<MultipartFile> newImages,
-            List<RoommatePostImage> oldImages
+            CreatePostRequest createReq,
+            List<MultipartFile> images
     ) {
-        CreatePostRequest createReq = toCreatePostRequest(req, PostCategory.POLICY);
-
         PolicyPost policyPost = PolicyPost.create(userId, createReq);
         policyPostRepository.save(policyPost);
 
-        if (newImages != null && !newImages.isEmpty()) {
+        if (images != null && !images.isEmpty()) {
             int order = 0;
-            for (MultipartFile file : newImages) {
+            for (MultipartFile file : images) {
                 if (file == null || file.isEmpty()) continue;
 
-                String url = imageStorage.uploadFreeImage(file);
+                String url = imageStorage.uploadPolicyImage(policyPost.getId(), order, file);
                 PolicyPostImage image = PolicyPostImage.of(policyPost, url, order++);
                 policyPostImageRepository.save(image);
             }
-        } else {
-            int order = 0;
-            for (RoommatePostImage oldImg : oldImages) {
-                String url = oldImg.getUrl();
-                if (!StringUtils.hasText(url)) continue;
-
-                PolicyPostImage copy = PolicyPostImage.of(policyPost, url, order++);
-                policyPostImageRepository.save(copy);
-            }
         }
-    }
-
-    private void deleteRoommatePostWithImages(RoommatePost post, List<RoommatePostImage> images) {
-        for (RoommatePostImage img : images) {
-            String url = img.getUrl();
-            if (StringUtils.hasText(url)) {
-                imageStorage.deleteFreeImage(url);
-            }
-        }
-        roommatePostImageRepository.deleteAllInBatch(images);
-        roommatePostRepository.delete(post);
+        return policyPost;
     }
 
     // =======================
@@ -309,7 +305,7 @@ public class RoommatePostService {
             }
         }
 
-        roommatePostRepository.delete(post);
+        roommatePostRepository.delete(post); // cascade 로 image row 삭제
     }
 
     // =======================
@@ -333,6 +329,80 @@ public class RoommatePostService {
             return dto;
         });
     }
+
+    // =======================
+    // SEARCH LIST (검색 + 지역 필터)
+    // =======================
+    @Transactional(readOnly = true)
+    public Page<PostListItemResponse> searchList(
+            int page,
+            int size,
+            SearchType searchType,
+            String keyword,
+            String sidoCode,    // null 가능
+            String sigunguCode  // null 가능
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        boolean hasSido = StringUtils.hasText(sidoCode);
+        boolean hasSigungu = StringUtils.hasText(sigunguCode);
+
+        Page<RoommatePost> posts;
+
+        switch (searchType) {
+            case TITLE -> {
+                if (!hasSido) {
+                    // 제목 + 지역 X
+                    posts = roommatePostRepository
+                            .findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(keyword, pageable);
+                } else if (!hasSigungu) {
+                    // 제목 + 시/도만
+                    posts = roommatePostRepository
+                            .findByTitleContainingIgnoreCaseAndSidoCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, pageable
+                            );
+                } else {
+                    // 제목 + 시/도 + 시/군/구
+                    posts = roommatePostRepository
+                            .findByTitleContainingIgnoreCaseAndSidoCodeAndSigunguCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, sigunguCode, pageable
+                            );
+                }
+            }
+            case CONTENT -> {
+                if (!hasSido) {
+                    posts = roommatePostRepository
+                            .findByContentContainingOrderByCreatedAtDesc(keyword, pageable);
+                } else if (!hasSigungu) {
+                    posts = roommatePostRepository
+                            .findByContentContainingAndSidoCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, pageable
+                            );
+                } else {
+                    posts = roommatePostRepository
+                            .findByContentContainingAndSidoCodeAndSigunguCodeOrderByCreatedAtDesc(
+                                    keyword, sidoCode, sigunguCode, pageable
+                            );
+                }
+            }
+
+            default -> throw new IllegalArgumentException("지원하지 않는 검색 타입입니다: " + searchType);
+        }
+
+        // 목록 DTO + 댓글 수 세팅
+        return posts.map(post -> {
+            PostListItemResponse dto = PostListItemResponse.fromRoommate(post);
+
+            long commentCount = commentService.getCommentCount(
+                    PostCategory.ROOMMATE,
+                    post.getId()
+            );
+            dto.setCommentCount(commentCount);
+
+            return dto;
+        });
+    }
+
 
     // =======================
     // DETAIL (+ 조회수 증가)

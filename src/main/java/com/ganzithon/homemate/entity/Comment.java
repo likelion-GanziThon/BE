@@ -53,4 +53,9 @@ public class Comment {
     public void updateContent(String content) {
         this.content = content;
     }
+
+    public void moveTo(PostCategory category, Long postId) {
+        this.category = category;
+        this.postId = postId;
+    }
 }

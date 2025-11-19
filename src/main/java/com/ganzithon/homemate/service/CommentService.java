@@ -67,4 +67,17 @@ public class CommentService {
     public long getCommentCount(PostCategory category, Long postId) {
         return commentRepository.countByCategoryAndPostId(category, postId);
     }
+
+    // ★ 게시판 이동 시 댓글 모두 이동
+    @Transactional
+    public void moveAll(PostCategory fromCategory,
+                        Long fromPostId,
+                        PostCategory toCategory,
+                        Long toPostId) {
+
+        var comments = commentRepository.findByCategoryAndPostId(fromCategory, fromPostId);
+        for (Comment comment : comments) {
+            comment.moveTo(toCategory, toPostId);
+        }
+    }
 }

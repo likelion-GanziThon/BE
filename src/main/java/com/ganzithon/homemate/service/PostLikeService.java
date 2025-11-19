@@ -37,4 +37,17 @@ public class PostLikeService {
     public boolean likedByUser(PostCategory category, Long postId, Long userId) {
         return postLikeRepository.existsByCategoryAndPostIdAndUserId(category, postId, userId);
     }
+
+    // ★ 게시판 이동 시 좋아요 모두 이동
+    @Transactional
+    public void moveAll(PostCategory fromCategory,
+                        Long fromPostId,
+                        PostCategory toCategory,
+                        Long toPostId) {
+
+        var likes = postLikeRepository.findByCategoryAndPostId(fromCategory, fromPostId);
+        for (PostLike like : likes) {
+            like.moveTo(toCategory, toPostId); // 엔티티 수정 → JPA 더티체킹
+        }
+    }
 }

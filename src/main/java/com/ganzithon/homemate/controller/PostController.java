@@ -15,6 +15,9 @@ import com.ganzithon.homemate.service.PostLikeService;
 import com.ganzithon.homemate.service.CommentService;
 import com.ganzithon.homemate.dto.PageResponse;
 import com.ganzithon.homemate.dto.PostListItemResponse;
+import com.ganzithon.homemate.dto.SearchType;
+import com.ganzithon.homemate.dto.ApiResponse;
+
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -57,7 +60,7 @@ public class PostController {
     // - 이미지(images)는 MultipartFile로 업로드
     // =============================================================
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> create(
+    public ResponseEntity<ApiResponse<Void>> create(
             @AuthenticationPrincipal UserPrincipal principal,
             @ModelAttribute @Valid CreatePostRequest req,
             @RequestPart(value = "images", required = false) List<MultipartFile> images
@@ -66,23 +69,24 @@ public class PostController {
 
         switch (req.getCategory()) {
             case ROOMMATE -> roommatePostService.create(userId, req, images);
-            case FREE     -> freePostService.create(userId, req, images);
-            case POLICY   -> policyPostService.create(userId, req, images);
+            case FREE -> freePostService.create(userId, req, images);
+            case POLICY -> policyPostService.create(userId, req, images);
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        ApiResponse<Void> body = new ApiResponse<>("게시글이 작성되었습니다.");
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     // =================================================
     // 글 수정 (작성자만)
     // PUT /api/posts/{id}
-    // - category는 쿼리 파라미터 (게시판 이동은 별도 설계 필요)
+    // - category는 쿼리 파라미터
     // =================================================
     @PutMapping(
             value = "/{id}",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE
     )
-    public ResponseEntity<Void> update(
+    public ResponseEntity<ApiResponse<Void>> update(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long id,
             @RequestParam PostCategory category,
@@ -91,24 +95,19 @@ public class PostController {
     ) {
         Long userId = principal.id();
 
-        // 수정 후 최종 카테고리
         PostCategory targetCategory = req.getNewCategory();
         if (targetCategory == null) {
-            // 혹시라도 안 들어오면 현재 게시판 유지
             targetCategory = category;
         }
 
-        // 1) 게시판이 그대로면 → 기존 update만 호출
         if (targetCategory == category) {
             switch (category) {
                 case ROOMMATE -> roommatePostService.update(userId, id, req, images);
-                case FREE     -> freePostService.update(userId, id, req, images);
-                case POLICY   -> policyPostService.update(userId, id, req, images);
+                case FREE -> freePostService.update(userId, id, req, images);
+                case POLICY -> policyPostService.update(userId, id, req, images);
             }
-        }
-        // 2) 게시판이 바뀌면 → "이동 + 수정" 로직 별도 호출
-        else {
-            switch (category) { // 현재 게시판 기준 분기
+        } else {
+            switch (category) {
                 case ROOMMATE -> roommatePostService.moveToAnotherCategory(
                         userId, id, req, images, targetCategory
                 );
@@ -121,7 +120,8 @@ public class PostController {
             }
         }
 
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> body = new ApiResponse<>("게시글이 수정되었습니다.");
+        return ResponseEntity.ok(body);
     }
 
     // =====================================
@@ -129,7 +129,7 @@ public class PostController {
     // DELETE /api/posts/{category}/{id}
     // =====================================
     @DeleteMapping("/{category}/{id}")
-    public ResponseEntity<Void> delete(
+    public ResponseEntity<ApiResponse<Void>> delete(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable PostCategory category,
             @PathVariable Long id
@@ -138,11 +138,12 @@ public class PostController {
 
         switch (category) {
             case ROOMMATE -> roommatePostService.delete(userId, id);
-            case FREE     -> freePostService.delete(userId, id);
-            case POLICY   -> policyPostService.delete(userId, id);
+            case FREE -> freePostService.delete(userId, id);
+            case POLICY -> policyPostService.delete(userId, id);
         }
 
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> body = new ApiResponse<>("게시글이 삭제되었습니다.");
+        return ResponseEntity.ok(body);
     }
 
     // ========================================
@@ -153,16 +154,56 @@ public class PostController {
     public ResponseEntity<PageResponse<PostListItemResponse>> list(
             @PathVariable PostCategory category,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) SearchType searchType,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String sido,
+            @RequestParam(required = false) String sigungu
     ) {
-        Page<PostListItemResponse> resultPage = switch (category) {
-            case ROOMMATE -> roommatePostService.getList(page, size);
-            case FREE     -> freePostService.getList(page, size);
-            case POLICY   -> policyPostService.getList(page, size);
-        };
+        Page<PostListItemResponse> resultPage = null;
+
+        boolean hasKeyword = (keyword != null && !keyword.isBlank());
+        boolean hasSearchType = (searchType != null);
+        boolean hasSido = (sido != null && !sido.isBlank());
+        boolean hasSigungu = (sigungu != null && !sigungu.isBlank());
+
+        switch (category) {
+            case ROOMMATE -> {
+                if (hasKeyword && hasSearchType) {
+                    resultPage = roommatePostService.searchList(
+                            page, size, searchType, keyword,
+                            hasSido ? sido : null,
+                            hasSigungu ? sigungu : null
+                    );
+                } else {
+                    resultPage = roommatePostService.getList(page, size);
+                }
+            }
+            case FREE -> {
+                if (hasKeyword && hasSearchType) {
+                    resultPage = freePostService.searchList(
+                            page, size, searchType, keyword,
+                            hasSido ? sido : null,
+                            hasSigungu ? sigungu : null
+                    );
+                } else {
+                    resultPage = freePostService.getList(page, size);
+                }
+            }
+            case POLICY -> {
+                if (hasKeyword && hasSearchType) {
+                    resultPage = policyPostService.searchList(
+                            page, size, searchType, keyword
+                    );
+                } else {
+                    resultPage = policyPostService.getList(page, size);
+                }
+            }
+        }
 
         return ResponseEntity.ok(new PageResponse<>(resultPage));
     }
+
 
     // ========================================
     // 상세 조회 (+ 좋아요/댓글 정보 포함)
@@ -176,8 +217,8 @@ public class PostController {
     ) {
         PostDetailResponse response = switch (category) {
             case ROOMMATE -> roommatePostService.getDetailAndIncreaseView(id);
-            case FREE     -> freePostService.getDetailAndIncreaseView(id);
-            case POLICY   -> policyPostService.getDetailAndIncreaseView(id);
+            case FREE -> freePostService.getDetailAndIncreaseView(id);
+            case POLICY -> policyPostService.getDetailAndIncreaseView(id);
         };
 
         // 좋아요 정보
@@ -206,25 +247,27 @@ public class PostController {
     // DELETE /api/posts/{category}/{id}/likes
     // ========================================
     @PostMapping("/{category}/{id}/likes")
-    public ResponseEntity<Void> like(
+    public ResponseEntity<ApiResponse<Void>> like(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable PostCategory category,
             @PathVariable Long id
     ) {
         Long userId = principal.id();
         postLikeService.like(category, id, userId);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
+        ApiResponse<Void> body = new ApiResponse<>("좋아요가 추가되었습니다.");
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     @DeleteMapping("/{category}/{id}/likes")
-    public ResponseEntity<Void> unlike(
+    public ResponseEntity<ApiResponse<Void>> unlike(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable PostCategory category,
             @PathVariable Long id
     ) {
         Long userId = principal.id();
         postLikeService.unlike(category, id, userId);
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> body = new ApiResponse<>("좋아요가 취소되었습니다.");
+        return ResponseEntity.ok(body);
     }
 
     // ========================================
@@ -235,7 +278,7 @@ public class PostController {
     // 삭제: DELETE /api/posts/comments/{commentId}
     // ========================================
     @PostMapping("/{category}/{id}/comments")
-    public ResponseEntity<Void> createComment(
+    public ResponseEntity<ApiResponse<Void>> createComment(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable PostCategory category,
             @PathVariable Long id,
@@ -243,36 +286,31 @@ public class PostController {
     ) {
         Long userId = principal.id();
         commentService.create(userId, category, id, req);
-        return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-    @GetMapping("/{category}/{id}/comments")
-    public ResponseEntity<List<CommentResponse>> getComments(
-            @PathVariable PostCategory category,
-            @PathVariable Long id
-    ) {
-        List<CommentResponse> comments = commentService.getComments(category, id);
-        return ResponseEntity.ok(comments);
+        ApiResponse<Void> body = new ApiResponse<>("댓글이 작성되었습니다.");
+        return ResponseEntity.status(HttpStatus.CREATED).body(body);
     }
 
     @PutMapping("/comments/{commentId}")
-    public ResponseEntity<Void> updateComment(
+    public ResponseEntity<ApiResponse<Void>> updateComment(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long commentId,
             @RequestBody @Valid UpdateCommentRequest req
     ) {
         Long userId = principal.id();
         commentService.update(userId, commentId, req);
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> body = new ApiResponse<>("댓글이 수정되었습니다.");
+        return ResponseEntity.ok(body);
     }
 
     @DeleteMapping("/comments/{commentId}")
-    public ResponseEntity<Void> deleteComment(
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable Long commentId
     ) {
         Long userId = principal.id();
         commentService.delete(userId, commentId);
-        return ResponseEntity.noContent().build();
+        ApiResponse<Void> body = new ApiResponse<>("댓글이 삭제되었습니다.");
+        return ResponseEntity.ok(body);
     }
 }
+
