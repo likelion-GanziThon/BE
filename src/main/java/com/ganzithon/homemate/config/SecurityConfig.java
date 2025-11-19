@@ -48,6 +48,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
                         // 로그인한 사용자 공개 엔드포인트
                         .requestMatchers("/api/posts/**").authenticated()
+                        // 공개 엔드포인트 (더 구체적인 경로를 먼저)
+                        .requestMatchers("/api/auth/**", "/api/housing/**", "/h2-console/**", "/error").permitAll()
+                        // 프로필 이미지 조회는 공개
+                        .requestMatchers(HttpMethod.GET, "/api/profile/image/**").permitAll()
+                        // 타인 프로필 조회는 공개
+                        .requestMatchers(HttpMethod.GET, "/api/profile/{userId}").permitAll()
+                        // 나머지 프로필 관련 엔드포인트는 인증 필요
+                        .requestMatchers("/api/profile/**").authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 // 401/403 응답을 명확하게
