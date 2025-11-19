@@ -597,22 +597,14 @@ public class HousingInfoService {
             return null;
         }
 
-        // houseTyNm이 빈 객체일 수 있으므로 String으로 변환
-        String houseTyNm = convertToString(item.getHouseTyNm());
-        
         return HousingInfo.of(
                 hsmpSnStr,
                 item.getBrtcNm(),
                 item.getSignguNm(),
                 item.getHsmpNm(),
-                item.getRnAdres(),
                 parseInteger(item.getHshldCo()),
-                item.getSuplyTyNm(),
-                parseDouble(item.getSuplyCmnuseAr()),
-                houseTyNm,
                 parseLong(item.getBassRentGtn()),
-                parseLong(item.getBassMtRntchrg()),
-                parseLong(item.getBassCnvrsGtnLmt())
+                parseLong(item.getBassMtRntchrg())
         );
     }
 
