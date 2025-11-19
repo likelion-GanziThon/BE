@@ -130,12 +130,82 @@ public class ProfileService {
 
         userRepository.save(user);
 
+        // 프로필 이미지 URL 생성
+        String profileImageUrl = DEFAULT_PROFILE_IMAGE_URL;
+
         return ProfileResponse.of(
                 user.getId(),
                 user.getLoginId(),
                 user.getDesiredArea(),
                 user.getDesiredMoveInDate(),
                 user.getIntroduction(),
+                profileImageUrl
+        );
+    }
+
+    @Transactional
+    public ProfileResponse deleteProfileContent(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 프로필 내용을 null로 업데이트 (이미지는 유지)
+        user.updateProfile(
+                null,
+                null,
+                null,
+                user.getProfileImagePath()
+        );
+
+        userRepository.save(user);
+
+        // 프로필 이미지 URL 생성
+        String profileImageUrl = DEFAULT_PROFILE_IMAGE_URL;
+        if (user.getProfileImagePath() != null && !user.getProfileImagePath().isEmpty()) {
+            Path filePath = Paths.get(uploadPath).resolve(user.getProfileImagePath()).normalize();
+            if (Files.exists(filePath)) {
+                profileImageUrl = "/api/profile/image/" + userId;
+            }
+        }
+
+        return ProfileResponse.of(
+                user.getId(),
+                user.getLoginId(),
+                null,
+                null,
+                null,
+                profileImageUrl
+        );
+    }
+
+    @Transactional
+    public ProfileResponse deleteProfileAll(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+
+        // 기존 이미지 파일 삭제
+        if (user.getProfileImagePath() != null && !user.getProfileImagePath().isEmpty()) {
+            deleteProfileImageFile(user.getProfileImagePath());
+        }
+
+        // 프로필 내용을 null로 업데이트
+        user.updateProfile(
+                null,
+                null,
+                null,
+                user.getProfileImagePath() // 이미지는 별도로 처리
+        );
+        
+        // 프로필 이미지 경로를 null로 설정 (직접 필드에 접근)
+        user.updateProfileImagePath(null);
+
+        userRepository.save(user);
+
+        return ProfileResponse.of(
+                user.getId(),
+                user.getLoginId(),
+                null,
+                null,
+                null,
                 DEFAULT_PROFILE_IMAGE_URL
         );
     }

@@ -89,7 +89,7 @@ public class UpstageAiService {
             requestBody.put("response_format", responseFormat);
             // reasoning_effort 제거 (없으면 더 빠름)
             requestBody.put("temperature", 0.0); // 0.0으로 최소화하여 가장 빠른 응답
-            requestBody.put("max_tokens", 200); // 최대 토큰 수 더 감소 (30초 내외 목표)
+            requestBody.put("max_tokens", 800); // 최대 토큰 수 증가 (완전한 JSON 응답을 위해)
 
             // HTTP 헤더 설정
             HttpHeaders headers = new HttpHeaders();
@@ -134,26 +134,74 @@ public class UpstageAiService {
                 List<Map<String, Object>> choices = (List<Map<String, Object>>) responseBody.get("choices");
                 if (choices != null && !choices.isEmpty()) {
                     Map<String, Object> firstChoice = choices.get(0);
+                    
+                    // finish_reason 확인 (응답이 완료되었는지 확인)
+                    String finishReason = (String) firstChoice.get("finish_reason");
+                    if (finishReason != null && "length".equals(finishReason)) {
+                        log.warn("AI API 응답이 max_tokens로 인해 잘렸을 수 있습니다. finish_reason: {}", finishReason);
+                    }
+                    
                     @SuppressWarnings("unchecked")
                     Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
                     String content = (String) message.get("content");
 
-                    // JSON 파싱
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> parsedResponse = objectMapper.readValue(content, Map.class);
-                    @SuppressWarnings("unchecked")
-                    List<Map<String, Object>> recommendations = (List<Map<String, Object>>) parsedResponse.get("recommendations");
-
-                    if (recommendations != null && !recommendations.isEmpty()) {
-                        // TOP5 추천 결과 추출 (순위와 이유만)
-                        return recommendations.stream()
-                                .limit(5)
-                                .map(rec -> new RecommendationResult(
-                                        (String) rec.get("hsmpSn"),
-                                        (String) rec.get("reason")
-                                ))
-                                .toList();
+                    // content 검증
+                    if (content == null || content.trim().isEmpty()) {
+                        log.error("AI API 응답의 content가 비어있습니다. responseBody: {}", responseBody);
+                        throw new RuntimeException("AI API 응답이 비어있습니다.");
                     }
+
+                    // content 로깅 (디버깅용) - 전체 내용 또는 잘린 부분
+                    log.debug("AI API 응답 content 길이: {}자, finish_reason: {}", content.length(), finishReason);
+                    if (log.isDebugEnabled() && content.length() > 500) {
+                        log.debug("AI API 응답 content (처음 500자): {}", content.substring(0, 500));
+                    }
+
+                    // JSON 파싱 (에러 처리 강화)
+                    try {
+                        // content를 trim하고 검증
+                        content = content.trim();
+                        
+                        // JSON이 완전한지 간단히 확인 (시작과 끝이 올바른지)
+                        if (!content.startsWith("{")) {
+                            log.error("AI API 응답이 JSON 객체로 시작하지 않습니다. content 시작 부분: {}", 
+                                    content.length() > 100 ? content.substring(0, 100) : content);
+                            throw new RuntimeException("AI API 응답 형식이 올바르지 않습니다. JSON 객체로 시작하지 않습니다.");
+                        }
+                        
+                        if (!content.endsWith("}")) {
+                            log.error("AI API 응답이 JSON 객체로 끝나지 않습니다 (잘렸을 수 있음). content 길이: {}자, 마지막 부분: {}", 
+                                    content.length(),
+                                    content.length() > 100 ? content.substring(Math.max(0, content.length() - 100)) : content);
+                            if ("length".equals(finishReason)) {
+                                throw new RuntimeException("AI API 응답이 max_tokens 한도로 인해 잘렸습니다. max_tokens를 늘려주세요.");
+                            }
+                            throw new RuntimeException("AI API 응답 형식이 올바르지 않습니다. JSON 객체가 완전하지 않습니다.");
+                        }
+
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> parsedResponse = objectMapper.readValue(content, Map.class);
+                        @SuppressWarnings("unchecked")
+                        List<Map<String, Object>> recommendations = (List<Map<String, Object>>) parsedResponse.get("recommendations");
+
+                        if (recommendations != null && !recommendations.isEmpty()) {
+                            // TOP5 추천 결과 추출 (순위와 이유만)
+                            return recommendations.stream()
+                                    .limit(5)
+                                    .map(rec -> new RecommendationResult(
+                                            (String) rec.get("hsmpSn"),
+                                            (String) rec.get("reason")
+                                    ))
+                                    .toList();
+                        } else {
+                            log.warn("AI API 응답에 recommendations가 없습니다. parsedResponse: {}", parsedResponse);
+                        }
+                    } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                        log.error("JSON 파싱 오류 발생. content: {}", content, e);
+                        throw new RuntimeException("AI API 응답을 파싱하는 중 오류가 발생했습니다: " + e.getMessage(), e);
+                    }
+                } else {
+                    log.warn("AI API 응답에 choices가 없습니다. responseBody: {}", responseBody);
                 }
             }
 

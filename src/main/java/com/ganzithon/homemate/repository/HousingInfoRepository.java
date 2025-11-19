@@ -21,5 +21,9 @@ public interface HousingInfoRepository extends JpaRepository<HousingInfo, Long> 
     // 권역별 쿼리 최적화: 시군구 코드 목록으로 조회 (서울, 부산, 경기 등)
     @Query("SELECT h FROM HousingInfo h WHERE h.brtcNm = :brtcNm AND h.signguNm IN :signguNms")
     List<HousingInfo> findByBrtcNmAndSignguNmIn(@Param("brtcNm") String brtcNm, @Param("signguNms") List<String> signguNms);
+    
+    // 특정 광역시/도의 모든 시/군/구 목록 조회 (중복 제거)
+    @Query("SELECT DISTINCT h.signguNm FROM HousingInfo h WHERE h.brtcNm = :brtcNm ORDER BY h.signguNm")
+    List<String> findDistinctSignguNmByBrtcNm(@Param("brtcNm") String brtcNm);
 }
 
