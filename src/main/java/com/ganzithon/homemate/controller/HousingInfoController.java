@@ -7,6 +7,7 @@ import com.ganzithon.homemate.entity.HousingInfo;
 import com.ganzithon.homemate.service.HousingInfoService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/housing")
@@ -100,6 +102,44 @@ public class HousingInfoController {
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("추천 서비스 처리 중 오류가 발생했습니다: " + e.getMessage()));
         }
+    }
+    
+    //AI를 활용한 주거정보 추천 (TOP5) - SSE 스트리밍 버전
+    //@param request 사용자 프롬프트가 포함된 요청
+    //@param region URL 파라미터로 권역 전달 (필수)
+    //@return SSE 스트림으로 추천 결과를 실시간 전송
+     
+    @PostMapping(value = "/recommend/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter getRecommendationsStream(
+            @RequestBody RecommendationRequest request,
+            @RequestParam(value = "region", required = true) String region) {
+        if (request.prompt() == null || request.prompt().trim().isEmpty()) {
+            SseEmitter emitter = new SseEmitter();
+            try {
+                emitter.send(SseEmitter.event()
+                    .name("error")
+                    .data("{\"error\":\"프롬프트를 입력해주세요.\"}"));
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+        
+        if (region == null || region.trim().isEmpty()) {
+            SseEmitter emitter = new SseEmitter();
+            try {
+                emitter.send(SseEmitter.event()
+                    .name("error")
+                    .data("{\"error\":\"권역 정보를 입력해주세요.\"}"));
+                emitter.complete();
+            } catch (Exception e) {
+                emitter.completeWithError(e);
+            }
+            return emitter;
+        }
+        
+        return housingInfoService.getRecommendationsStream(request.prompt(), region);
     }
 }
 

@@ -29,13 +29,15 @@ public class ProfileService {
     @Value("${uploadPath}")
     private String uploadPath;
 
+    private static final String DEFAULT_PROFILE_IMAGE_URL = "https://search.pstatic.net/common/?src=http%3A%2F%2Fblogfiles.naver.net%2FMjAyMzEwMDZfODkg%2FMDAxNjk2NTkwNTMzMDAx.RudBnFXJwhasTj5zoo5AqrChfOp7nPae-OoNR-CCQ1wg.N-AzWRf8aSC3GU66AZk9Dzi-J6d_gKk3aXJqbApL7ZUg.JPEG.tmvldkrk%2F104.jpg&type=sc960_832";
+
     @Transactional(readOnly = true)
     public ProfileResponse getProfile(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
         
-        // 프로필 이미지 URL 생성 (이미지가 있으면 URL 반환, 없으면 빈 문자열)
-        String profileImageUrl = "";
+        // 프로필 이미지 URL 생성 (이미지가 있으면 URL 반환, 없으면 기본 이미지 URL)
+        String profileImageUrl = DEFAULT_PROFILE_IMAGE_URL;
         if (user.getProfileImagePath() != null && !user.getProfileImagePath().isEmpty()) {
             // 실제로 파일이 존재하는지 확인
             Path filePath = Paths.get(uploadPath).resolve(user.getProfileImagePath()).normalize();
@@ -89,7 +91,7 @@ public class ProfileService {
         userRepository.save(user);
 
         // 프로필 이미지 URL 생성
-        String profileImageUrl = "";
+        String profileImageUrl = DEFAULT_PROFILE_IMAGE_URL;
         if (profileImagePath != null && !profileImagePath.isEmpty()) {
             // 실제로 파일이 존재하는지 확인
             Path filePath = Paths.get(uploadPath).resolve(profileImagePath).normalize();
@@ -134,7 +136,7 @@ public class ProfileService {
                 user.getDesiredArea(),
                 user.getDesiredMoveInDate(),
                 user.getIntroduction(),
-                ""
+                DEFAULT_PROFILE_IMAGE_URL
         );
     }
 

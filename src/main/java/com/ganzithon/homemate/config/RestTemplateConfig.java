@@ -50,8 +50,9 @@ public class RestTemplateConfig {
             }
         };
         
-        factory.setConnectTimeout(5000); // 5초
-        factory.setReadTimeout(60000); // 60초
+        // 타임아웃 설정: 2분 (120초 = 120,000ms)
+        factory.setConnectTimeout(120000); // 연결 타임아웃 2분
+        factory.setReadTimeout(120000); // 읽기 타임아웃 2분
 
         return new RestTemplate(factory);
     }

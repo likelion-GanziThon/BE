@@ -41,50 +41,15 @@ public class UpstageAiService {
 
     public List<RecommendationResult> getRecommendations(String userPrompt, List<Map<String, Object>> housingDataList) {
         try {
-            // 주거정보 데이터를 JSON 문자열로 변환
+            // 이미 HousingInfoService에서 10개로 제한되었으므로 그대로 사용
+            // 주거정보 데이터를 JSON 문자열로 변환 (최소화된 필드만 포함)
             String housingDataJson = objectMapper.writeValueAsString(housingDataList);
 
-            // 시스템 프롬프트 생성
-            String systemPrompt = """
-                당신은 주거정보 추천 전문가입니다. 사용자의 요구사항을 분석하여 가장 적합한 주거정보를 추천해주세요.
-                
-                주거정보 데이터의 필드 설명:
-                - hsmpSn: 단지 식별자
-                - brtcNm: 광역시도명 (예: 서울특별시, 부산광역시)
-                - signguNm: 시군구명 (예: 강남구, 서초구)
-                - hsmpNm: 단지명
-                - rnAdres: 도로명 주소
-                - hshldCo: 세대수
-                - suplyTyNm: 공급 유형 명 (예: 공공임대, 전세임대)
-                - suplyCmnuseAr: 공급 공용 면적 (제곱미터)
-                - houseTyNm: 주택 유형 명 (예: 아파트, 오피스텔)
-                - bassRentGtn: 기본 임대보증금 (원)
-                - bassMtRntchrg: 기본 월임대료 (원)
-                - bassCnvrsGtnLmt: 기본 전환보증금 (원)
-                
-                사용자의 요구사항을 분석하여 가장 적합한 주거정보 TOP5를 추천해주세요.
-                추천 결과는 JSON 형식으로 반환하며, 각 항목에는 추천 순위, 단지 식별자(hsmpSn), 추천 이유를 포함해야 합니다.
-                """;
+            // 시스템 프롬프트 생성 (최소화)
+            String systemPrompt = "TOP5 추천. JSON: {\"recommendations\": [{\"rank\": 1, \"hsmpSn\": \"...\", \"reason\": \"...\"}]}";
 
-            // 사용자 메시지 생성
-            String userMessage = String.format("""
-                사용자 요구사항: %s
-                
-                다음 주거정보 데이터 중에서 사용자 요구사항에 가장 적합한 TOP5를 추천해주세요:
-                %s
-                
-                응답 형식:
-                {
-                  "recommendations": [
-                    {
-                      "rank": 1,
-                      "hsmpSn": "단지 식별자",
-                      "reason": "추천 이유"
-                    },
-                    ...
-                  ]
-                }
-                """, userPrompt, housingDataJson);
+            // 사용자 메시지 생성 (최소화)
+            String userMessage = String.format("%s\n%s", userPrompt, housingDataJson);
 
             // JSON 스키마 정의 (실제 스키마 구조)
             Map<String, Object> schemaDefinition = new HashMap<>();
@@ -122,8 +87,9 @@ public class UpstageAiService {
             responseFormat.put("type", "json_schema");
             responseFormat.put("json_schema", jsonSchema);
             requestBody.put("response_format", responseFormat);
-            requestBody.put("reasoning_effort", "high");
-            requestBody.put("temperature", 0.3);
+            // reasoning_effort 제거 (없으면 더 빠름)
+            requestBody.put("temperature", 0.0); // 0.0으로 최소화하여 가장 빠른 응답
+            requestBody.put("max_tokens", 200); // 최대 토큰 수 더 감소 (30초 내외 목표)
 
             // HTTP 헤더 설정
             HttpHeaders headers = new HttpHeaders();
@@ -133,11 +99,32 @@ public class UpstageAiService {
             // HTTP 요청 생성
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
 
-            log.info("Upstage AI API 호출 시작: model={}, prompt length={}", model, userPrompt.length());
+            // 로그 최소화
 
             // API 호출
             @SuppressWarnings("unchecked")
-            ResponseEntity<Map<String, Object>> response = restTemplate.postForEntity(apiUrl, request, (Class<Map<String, Object>>) (Class<?>) Map.class);
+            ResponseEntity<Map<String, Object>> response;
+            try {
+                response = restTemplate.postForEntity(apiUrl, request, (Class<Map<String, Object>>) (Class<?>) Map.class);
+            } catch (org.springframework.web.client.ResourceAccessException e) {
+                if (e.getCause() instanceof java.net.SocketTimeoutException) {
+                    // 데이터를 더 줄여서 재시도 (5개로)
+                    if (housingDataList.size() > 5) {
+                        List<Map<String, Object>> retryDataList = housingDataList.subList(0, 5);
+                        String retryDataJson = objectMapper.writeValueAsString(retryDataList);
+                        String retryUserMessage = String.format("%s\n%s", userPrompt, retryDataJson);
+                        requestBody.put("messages", List.of(
+                            Map.of("role", "system", "content", systemPrompt),
+                            Map.of("role", "user", "content", retryUserMessage)
+                        ));
+                        response = restTemplate.postForEntity(apiUrl, request, (Class<Map<String, Object>>) (Class<?>) Map.class);
+                    } else {
+                        throw new RuntimeException("AI API 타임아웃", e);
+                    }
+                } else {
+                    throw e;
+                }
+            }
 
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
@@ -151,8 +138,6 @@ public class UpstageAiService {
                     Map<String, Object> message = (Map<String, Object>) firstChoice.get("message");
                     String content = (String) message.get("content");
 
-                    log.info("Upstage AI API 응답 수신: content length={}", content.length());
-
                     // JSON 파싱
                     @SuppressWarnings("unchecked")
                     Map<String, Object> parsedResponse = objectMapper.readValue(content, Map.class);
@@ -160,7 +145,7 @@ public class UpstageAiService {
                     List<Map<String, Object>> recommendations = (List<Map<String, Object>>) parsedResponse.get("recommendations");
 
                     if (recommendations != null && !recommendations.isEmpty()) {
-                        // TOP5 추천 결과 추출
+                        // TOP5 추천 결과 추출 (순위와 이유만)
                         return recommendations.stream()
                                 .limit(5)
                                 .map(rec -> new RecommendationResult(
@@ -172,7 +157,6 @@ public class UpstageAiService {
                 }
             }
 
-            log.warn("Upstage AI API 응답에서 추천 결과를 찾을 수 없습니다.");
             return List.of();
 
         } catch (Exception e) {

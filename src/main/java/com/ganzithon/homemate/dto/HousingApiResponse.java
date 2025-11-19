@@ -39,20 +39,8 @@ public class HousingApiResponse {
         @JsonProperty("hsmpNm")
         private String hsmpNm; // 단지명
 
-        @JsonProperty("rnAdres")
-        private String rnAdres; // 도로명 주소
-
         @JsonProperty("hshldCo")
         private Object hshldCo; // 세대수 (숫자 또는 문자열)
-
-        @JsonProperty("suplyTyNm")
-        private String suplyTyNm; // 공급 유형 명
-
-        @JsonProperty("suplyCmnuseAr")
-        private Object suplyCmnuseAr; // 공급 공용 면적 (숫자 또는 문자열)
-
-        @JsonProperty("houseTyNm")
-        private Object houseTyNm; // 주택 유형 명 (빈 객체일 수 있음)
 
         @JsonProperty("bassRentGtn")
         private Object bassRentGtn; // 기본 임대보증금 (숫자 또는 문자열)
@@ -60,8 +48,21 @@ public class HousingApiResponse {
         @JsonProperty("bassMtRntchrg")
         private Object bassMtRntchrg; // 기본 월임대료 (숫자 또는 문자열)
 
-        @JsonProperty("bassCnvrsGtnLmt")
-        private Object bassCnvrsGtnLmt; // 기본 전환보증금 (숫자 또는 문자열)
+        // 사용하지 않는 필드들 (API 응답에는 포함되지만 저장하지 않음)
+        // @JsonProperty("rnAdres")
+        // private String rnAdres; // 도로명 주소
+
+        // @JsonProperty("suplyTyNm")
+        // private String suplyTyNm; // 공급 유형 명
+
+        // @JsonProperty("suplyCmnuseAr")
+        // private Object suplyCmnuseAr; // 공급 공용 면적 (숫자 또는 문자열)
+
+        // @JsonProperty("houseTyNm")
+        // private Object houseTyNm; // 주택 유형 명 (빈 객체일 수 있음)
+
+        // @JsonProperty("bassCnvrsGtnLmt")
+        // private Object bassCnvrsGtnLmt; // 기본 전환보증금 (숫자 또는 문자열)
     }
 }
 
