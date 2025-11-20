@@ -37,28 +37,39 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults()) // ✅ CORS 활성화
+                .cors(Customizer.withDefaults())
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         // 프리플라이트 전역 허용
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         // 공개 엔드포인트
-                        .requestMatchers("/api/auth/**", "/h2-console/**", "/error").permitAll()
-                        // 로그인한 사용자 공개 엔드포인트
-                        .requestMatchers("/api/posts/**").authenticated()
-                        // 공개 엔드포인트 (더 구체적인 경로를 먼저)
-                        .requestMatchers("/api/auth/**", "/api/housing/**", "/h2-console/**", "/error").permitAll()
+                        .requestMatchers(
+                                "/",                    // 홈 컨트롤러
+                                "/error",
+                                "/api/auth/**",
+                                "/api/housing/**",
+                                "/h2-console/**"
+                        ).permitAll()
+
                         // 프로필 이미지 조회는 공개
                         .requestMatchers(HttpMethod.GET, "/api/profile/image/**").permitAll()
-                        // 타인 프로필 조회는 공개
-                        .requestMatchers(HttpMethod.GET, "/api/profile/{userId}").permitAll()
+                        // 타인 프로필 조회는 공개 (path variable 패턴)
+                        .requestMatchers(HttpMethod.GET, "/api/profile/*").permitAll()
+
+                        // 게시글 관련은 인증 필요
+                        .requestMatchers("/api/posts/**").authenticated()
                         // 나머지 프로필 관련 엔드포인트는 인증 필요
                         .requestMatchers("/api/profile/**").authenticated()
+
+                        // 그 외 나머지는 일단 전부 허용 or 인증 필요 중 택1
+                        // 개발 중엔 아래처럼 permitAll로 두고,
+                        // 나중에 보안 강화할 때 authenticated로 바꾸면 됨.
+                        .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                // 401/403 응답을 명확하게
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                         .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN))
