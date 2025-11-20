@@ -82,6 +82,7 @@ public class HousingInfoService {
     // 이미 URL 인코딩되어 있으면 그대로 사용, 그렇지 않으면 인코딩 수행
     private String normalizeApiKey(String apiKey) {
         if (apiKey == null || apiKey.trim().isEmpty()) {
+            log.warn("API 키가 비어있습니다.");
             return apiKey;
         }
         
@@ -91,7 +92,7 @@ public class HousingInfoService {
             // %XX 패턴이 있는지 확인 (예: %2B, %3D, %20 등)
             java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("%[0-9A-Fa-f]{2}");
             if (pattern.matcher(apiKey).find()) {
-                log.debug("API 키가 이미 URL 인코딩되어 있습니다. 그대로 사용합니다.");
+                log.info("API 키가 이미 URL 인코딩되어 있습니다. 그대로 사용합니다. (길이: {})", apiKey.length());
                 return apiKey;
             }
         }
@@ -99,7 +100,7 @@ public class HousingInfoService {
         // 인코딩되지 않은 것으로 간주하고 URL 인코딩 수행
         try {
             String encoded = java.net.URLEncoder.encode(apiKey, java.nio.charset.StandardCharsets.UTF_8);
-            log.debug("API 키를 URL 인코딩했습니다.");
+            log.info("API 키를 URL 인코딩했습니다. (원본 길이: {}, 인코딩 후 길이: {})", apiKey.length(), encoded.length());
             return encoded;
         } catch (Exception e) {
             log.warn("API 키 인코딩 중 오류 발생, 원본 키 사용: {}", e.getMessage());
@@ -151,21 +152,27 @@ public class HousingInfoService {
             
             String responseBody = new String(bodyBytes, java.nio.charset.StandardCharsets.UTF_8);
             
-            // HTML 응답 체크 (실제 HTML 태그가 있는지 확인)
+            // HTML 응답 체크 및 로깅
             String trimmedBody = responseBody.trim();
-            if (contentType.contains("text/html") && (trimmedBody.startsWith("<html") || trimmedBody.startsWith("<!DOCTYPE"))) {
-                String errorPreview = responseBody.substring(0, Math.min(500, responseBody.length()));
-                log.error("API가 HTML을 반환했습니다. 응답 내용 (처음 500자): {}", errorPreview);
-                throw new RuntimeException(String.format(
-                        "API가 JSON 대신 HTML을 반환했습니다. (상태코드: %d)\n" +
-                        "API URL, 키, 파라미터를 확인하세요.\n" +
-                        "응답 내용: %s", statusCode, errorPreview));
+            if (contentType.contains("text/html")) {
+                // HTML 응답인 경우 항상 로그에 출력
+                String errorPreview = responseBody.substring(0, Math.min(1000, responseBody.length()));
+                log.error("API가 HTML을 반환했습니다. 응답 내용 (처음 1000자):\n{}", errorPreview);
+                
+                // HTML 태그가 명확히 있는 경우에만 예외 발생
+                if (trimmedBody.startsWith("<html") || trimmedBody.startsWith("<!DOCTYPE") || 
+                    trimmedBody.contains("<html") || trimmedBody.contains("<!DOCTYPE")) {
+                    throw new RuntimeException(String.format(
+                            "API가 JSON 대신 HTML을 반환했습니다. (상태코드: %d)\n" +
+                            "API URL, 키, 파라미터를 확인하세요.\n" +
+                            "응답 내용: %s", statusCode, errorPreview));
+                }
             }
             
             // JSON 응답인지 확인 (첫 문자가 { 또는 [인지)
             if (!trimmedBody.startsWith("{") && !trimmedBody.startsWith("[")) {
-                String errorPreview = responseBody.substring(0, Math.min(500, responseBody.length()));
-                log.error("JSON 형식이 아닌 응답입니다. 응답 내용 (처음 500자): {}", errorPreview);
+                String errorPreview = responseBody.substring(0, Math.min(1000, responseBody.length()));
+                log.error("JSON 형식이 아닌 응답입니다. 응답 내용 (처음 1000자):\n{}", errorPreview);
                 throw new RuntimeException(String.format(
                         "JSON 형식이 아닌 응답입니다. (상태코드: %d)\n" +
                         "응답 내용: %s", statusCode, errorPreview));
@@ -190,8 +197,12 @@ public class HousingInfoService {
             
             // 응답 구조 검증
             if (apiResponse == null || apiResponse.getHsmpList() == null) {
-                log.warn("[PROBE] API 응답 구조가 올바르지 않습니다. (brtcCode: {}, signguCode: {}, pageNo: {})", 
-                        brtcCode, signguCode, pageNo);
+                // 응답 본문 일부를 로그에 출력하여 디버깅 지원
+                String responsePreview = responseBody.length() > 500 
+                    ? responseBody.substring(0, 500) + "..." 
+                    : responseBody;
+                log.warn("[PROBE] API 응답 구조가 올바르지 않습니다. (brtcCode: {}, signguCode: {}, pageNo: {})\n응답 본문 (처음 500자): {}", 
+                        brtcCode, signguCode, pageNo, responsePreview);
                 return 0;
             }
             
