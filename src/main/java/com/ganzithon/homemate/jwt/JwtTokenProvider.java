@@ -4,13 +4,13 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.Date;
-import org.springframework.stereotype.Component;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -25,42 +25,53 @@ public class JwtTokenProvider {
         this.accessKey = createKey(props.getAccessTokenSecret());
     }
 
-    // === 핵심: 어떤 형식이 와도 안전하게 SecretKey 생성 ===
-    private SecretKey createKey(String value) {
-        byte[] keyBytes;
+    /**
+     * 어떤 문자열이 오든지:
+     * 1) Base64 디코딩 시도
+     * 2) Base64URL 디코딩 시도
+     * 3) 둘 다 실패하면 평문을 UTF-8 바이트로 사용
+     */
+    private SecretKey createKey(String raw) {
+        if (raw == null || raw.isBlank()) {
+            throw new IllegalArgumentException("JWT secret key 가 설정되지 않았습니다.");
+        }
 
-        if (isBase64(value)) {
-            keyBytes = Decoders.BASE64.decode(value);
-        } else if (isBase64Url(value)) {
-            keyBytes = Decoders.BASE64URL.decode(padBase64Url(value));
-        } else {
-            // 사람이 읽기 좋은 평문 비밀키 지원 (권장: 충분히 길게)
+        String value = raw.trim();
+        byte[] keyBytes = tryDecodeBase64(value);
+
+        if (keyBytes == null) {
+            keyBytes = tryDecodeBase64Url(value);
+        }
+
+        if (keyBytes == null) {
+            // 사람이 읽기 좋은 평문 비밀키
             keyBytes = value.getBytes(StandardCharsets.UTF_8);
         }
 
-        if (keyBytes.length < 32) { // HS256 최소 256-bit 권장
+        // HS256 권장: 최소 32 bytes (256bit)
+        if (keyBytes.length < 32) {
             throw new IllegalArgumentException(
-                    "JWT secret key는 32 bytes 이내여야 합니다. current=" + keyBytes.length);
+                    "JWT secret key는 최소 32 bytes(256bit) 이상이어야 합니다. current=" + keyBytes.length
+            );
         }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    private boolean isBase64(String s) {
-        // 표준 Base64: + / =
-        return s.matches("^[A-Za-z0-9+/]+={0,2}$");
+    private byte[] tryDecodeBase64(String s) {
+        try {
+            return Decoders.BASE64.decode(s);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
-    private boolean isBase64Url(String s) {
-        // URL-safe: - _ (= optional)
-        return s.matches("^[A-Za-z0-9_-]+={0,2}$");
-    }
-
-    private String padBase64Url(String s) {
-        int mod = s.length() % 4;
-        if (mod == 2) return s + "==";
-        if (mod == 3) return s + "=";
-        if (mod == 1) throw new IllegalArgumentException("Invalid Base64URL length");
-        return s;
+    private byte[] tryDecodeBase64Url(String s) {
+        try {
+            return Decoders.BASE64URL.decode(s);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public String createAccessToken(String subject, Map<String, Object> claims) {
