@@ -64,9 +64,7 @@ public class SecurityConfig {
                         // 나머지 프로필 관련 엔드포인트는 인증 필요
                         .requestMatchers("/api/profile/**").authenticated()
 
-                        // 그 외 나머지는 일단 전부 허용 or 인증 필요 중 택1
-                        // 개발 중엔 아래처럼 permitAll로 두고,
-                        // 나중에 보안 강화할 때 authenticated로 바꾸면 됨.
+                        // 나머지는 일단 전부 허용 (추후 강화 가능)
                         .anyRequest().permitAll()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -75,6 +73,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((req, res, e) -> res.sendError(HttpServletResponse.SC_FORBIDDEN))
                 );
 
+        // h2-console 같은 iframe 허용
         http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
         return http.build();
@@ -93,15 +92,24 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         var config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of("*")); // 프론트 주소로 제한 권장: http://localhost:3000 등
+
+        // ✅ 명시된 Origin만 허용
+        config.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://localhost:5173",
+                "https://homemates.click",
+                "https://www.homemates.click"
+        ));
+
         config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization","Content-Type","Accept","X-Requested-With"));
         config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(true); // JWT 헤더/쿠키 쓸 때 필요
 
         var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
 }
+
 
