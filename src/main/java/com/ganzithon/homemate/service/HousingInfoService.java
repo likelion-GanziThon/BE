@@ -78,24 +78,54 @@ public class HousingInfoService {
         return fetchAndSaveHousingData(brtcCode, signguCode, pageNo, numOfRows);
     }
 
+    // API 키 정규화: 인코딩/디코딩 모두 지원
+    // 이미 URL 인코딩되어 있으면 그대로 사용, 그렇지 않으면 인코딩 수행
+    private String normalizeApiKey(String apiKey) {
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            return apiKey;
+        }
+        
+        // 이미 URL 인코딩되어 있는지 확인 (%XX 패턴이 있는지)
+        // % 뒤에 16진수 2자리가 오는 패턴이 있으면 이미 인코딩된 것으로 간주
+        if (apiKey.contains("%")) {
+            // %XX 패턴이 있는지 확인 (예: %2B, %3D, %20 등)
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("%[0-9A-Fa-f]{2}");
+            if (pattern.matcher(apiKey).find()) {
+                log.debug("API 키가 이미 URL 인코딩되어 있습니다. 그대로 사용합니다.");
+                return apiKey;
+            }
+        }
+        
+        // 인코딩되지 않은 것으로 간주하고 URL 인코딩 수행
+        try {
+            String encoded = java.net.URLEncoder.encode(apiKey, java.nio.charset.StandardCharsets.UTF_8);
+            log.debug("API 키를 URL 인코딩했습니다.");
+            return encoded;
+        } catch (Exception e) {
+            log.warn("API 키 인코딩 중 오류 발생, 원본 키 사용: {}", e.getMessage());
+            return apiKey;
+        }
+    }
+
     // 내부 구현 메서드
     private int fetchAndSaveHousingDataInternal(String brtcCode, String signguCode, int pageNo, int numOfRows) {
-            // 이미 인코딩된 키 사용 (properties에서 %2B, %3D%3D 포함된 값)
-            // 재인코딩 방지를 위해 쿼리 문자열을 직접 구성
+            // API 키 인코딩 처리 (인코딩/디코딩 모두 지원)
+            String encodedApiKey = normalizeApiKey(apiKey);
+            
             String separator = apiUrl.contains("?") ? "&" : "?";
             
-            // 쿼리 문자열 직접 구성 (재인코딩 방지)
-            // 패턴: ServiceKey={이미 인코딩된 키}&brtcCode={값}&signguCode={값}&...
+            // 쿼리 문자열 직접 구성
+            // 패턴: ServiceKey={인코딩된 키}&brtcCode={값}&signguCode={값}&...
             String queryString = String.format(
                     "%sServiceKey=%s&brtcCode=%s&signguCode=%s&pageNo=%d&numOfRows=%d&resultType=json",
-                    separator, apiKey, brtcCode, signguCode, pageNo, numOfRows
+                    separator, encodedApiKey, brtcCode, signguCode, pageNo, numOfRows
             );
             
-            // 완성된 URL 문자열을 URI로 변환 (재인코딩 방지)
+            // 완성된 URL 문자열을 URI로 변환
             String fullUrl = apiUrl + queryString;
             java.net.URI uri = java.net.URI.create(fullUrl);
 
-            log.info("API 호출 URL: {}", fullUrl.replace(apiKey, "***"));
+            log.info("API 호출 URL: {}", fullUrl.replace(encodedApiKey, "***"));
 
             // API 호출 - 먼저 String으로 받아서 응답 확인
             HttpHeaders headers = new HttpHeaders();
