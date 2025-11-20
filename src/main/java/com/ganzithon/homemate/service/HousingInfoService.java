@@ -152,21 +152,22 @@ public class HousingInfoService {
             
             String responseBody = new String(bodyBytes, java.nio.charset.StandardCharsets.UTF_8);
             
-            // HTML 응답 체크 및 로깅
+            // 응답 본문 확인
             String trimmedBody = responseBody.trim();
-            if (contentType.contains("text/html")) {
-                // HTML 응답인 경우 항상 로그에 출력
+            
+            // Content-Type이 text/html이어도 실제 응답이 JSON 형식일 수 있음
+            // 실제 HTML 태그가 있는지 확인
+            boolean isActualHtml = trimmedBody.startsWith("<html") || trimmedBody.startsWith("<!DOCTYPE") || 
+                                   trimmedBody.contains("<html") || trimmedBody.contains("<!DOCTYPE");
+            
+            if (contentType.contains("text/html") && isActualHtml) {
+                // 실제 HTML 응답인 경우
                 String errorPreview = responseBody.substring(0, Math.min(1000, responseBody.length()));
                 log.error("API가 HTML을 반환했습니다. 응답 내용 (처음 1000자):\n{}", errorPreview);
-                
-                // HTML 태그가 명확히 있는 경우에만 예외 발생
-                if (trimmedBody.startsWith("<html") || trimmedBody.startsWith("<!DOCTYPE") || 
-                    trimmedBody.contains("<html") || trimmedBody.contains("<!DOCTYPE")) {
-                    throw new RuntimeException(String.format(
-                            "API가 JSON 대신 HTML을 반환했습니다. (상태코드: %d)\n" +
-                            "API URL, 키, 파라미터를 확인하세요.\n" +
-                            "응답 내용: %s", statusCode, errorPreview));
-                }
+                throw new RuntimeException(String.format(
+                        "API가 JSON 대신 HTML을 반환했습니다. (상태코드: %d)\n" +
+                        "API URL, 키, 파라미터를 확인하세요.\n" +
+                        "응답 내용: %s", statusCode, errorPreview));
             }
             
             // JSON 응답인지 확인 (첫 문자가 { 또는 [인지)
@@ -196,23 +197,44 @@ public class HousingInfoService {
             }
             
             // 응답 구조 검증
-            if (apiResponse == null || apiResponse.getHsmpList() == null) {
-                // 응답 본문 일부를 로그에 출력하여 디버깅 지원
+            if (apiResponse == null) {
                 String responsePreview = responseBody.length() > 500 
                     ? responseBody.substring(0, 500) + "..." 
                     : responseBody;
-                log.warn("[PROBE] API 응답 구조가 올바르지 않습니다. (brtcCode: {}, signguCode: {}, pageNo: {})\n응답 본문 (처음 500자): {}", 
+                log.warn("[PROBE] API 응답이 null입니다. (brtcCode: {}, signguCode: {}, pageNo: {})\n응답 본문 (처음 500자): {}", 
                         brtcCode, signguCode, pageNo, responsePreview);
                 return 0;
             }
             
             String resultCode = apiResponse.getCode();
-            List<HousingApiResponse.HousingItem> items = apiResponse.getHsmpList();
             
-            // API 응답 코드 확인
+            // API 응답 코드 확인 (에러 코드 처리)
             if (resultCode != null && !resultCode.equals("00") && !resultCode.equals("000")) {
-                log.warn("[PROBE] API 응답 코드 오류: code={} (brtcCode: {}, signguCode: {}, pageNo: {})", 
-                        resultCode, brtcCode, signguCode, pageNo);
+                String errorMsg = apiResponse.getMsg() != null ? apiResponse.getMsg() : "알 수 없는 오류";
+                
+                // 호출 제한 초과 에러 (code: 22)
+                if ("22".equals(resultCode)) {
+                    log.error("[API 제한] API 호출 횟수 제한을 초과했습니다. (brtcCode: {}, signguCode: {}, pageNo: {})\n에러 메시지: {}", 
+                            brtcCode, signguCode, pageNo, errorMsg);
+                    throw new RuntimeException(String.format(
+                            "API 호출 횟수 제한을 초과했습니다. 잠시 후 다시 시도해주세요.\n" +
+                            "에러 코드: %s\n" +
+                            "에러 메시지: %s", resultCode, errorMsg));
+                }
+                
+                log.warn("[API 오류] API 응답 코드 오류: code={}, msg={} (brtcCode: {}, signguCode: {}, pageNo: {})", 
+                        resultCode, errorMsg, brtcCode, signguCode, pageNo);
+                return 0;
+            }
+            
+            // hsmpList가 null인지 확인
+            List<HousingApiResponse.HousingItem> items = apiResponse.getHsmpList();
+            if (items == null) {
+                String responsePreview = responseBody.length() > 500 
+                    ? responseBody.substring(0, 500) + "..." 
+                    : responseBody;
+                log.warn("[PROBE] API 응답의 hsmpList가 null입니다. (brtcCode: {}, signguCode: {}, pageNo: {})\n응답 본문 (처음 500자): {}", 
+                        brtcCode, signguCode, pageNo, responsePreview);
                 return 0;
             }
             
@@ -340,9 +362,9 @@ public class HousingInfoService {
             
             // 나머지 페이지 처리
             do {
-                // 너무 많은 요청을 방지하기 위해 잠시 대기
+                // API 호출 제한을 고려하여 대기 시간 증가 (0.5초)
                 try {
-                    Thread.sleep(100); // 0.1초 대기
+                    Thread.sleep(500); // 0.5초 대기
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -406,15 +428,25 @@ public class HousingInfoService {
                 int saved = fetchAllHousingDataForRegion(region.brtcCode, region.signguCode);
                 totalSaved += saved;
                 log.info("지역 데이터 수집 완료: {}건 저장 (누적: {}건)", saved, totalSaved);
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                // API 호출 제한 초과 에러인 경우
+                if (e.getMessage() != null && e.getMessage().contains("API 호출 횟수 제한")) {
+                    log.error("API 호출 제한 초과로 인해 데이터 수집을 중단합니다. (brtcCode: {}, signguCode: {})", 
+                            region.brtcCode, region.signguCode);
+                    throw e; // 제한 초과는 전체 프로세스 중단
+                }
                 log.error("지역 데이터 수집 실패 (brtcCode: {}, signguCode: {}): {}", 
+                        region.brtcCode, region.signguCode, e.getMessage());
+                // 다른 오류는 다음 지역 계속 진행
+            } catch (Exception e) {
+                log.error("지역 데이터 수집 중 예상치 못한 오류 발생 (brtcCode: {}, signguCode: {}): {}", 
                         region.brtcCode, region.signguCode, e.getMessage());
                 // 오류가 발생해도 다음 지역 계속 진행
             }
             
-            // API 부하 방지를 위한 대기
+            // API 부하 방지를 위한 대기 (호출 제한을 고려하여 1초로 증가)
             try {
-                Thread.sleep(200); // 0.2초 대기
+                Thread.sleep(1000); // 1초 대기
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;

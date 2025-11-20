@@ -12,6 +12,9 @@ public class HousingApiResponse {
     @JsonProperty("code")
     private String code; // API 응답 코드 (예: "000")
 
+    @JsonProperty("msg")
+    private String msg; // API 응답 메시지 (에러 메시지 등)
+
     @JsonProperty("hsmpList")
     private List<HousingItem> hsmpList; // 주거정보 리스트
 
