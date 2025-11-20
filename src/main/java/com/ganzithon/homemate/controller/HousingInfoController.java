@@ -4,6 +4,7 @@ import com.ganzithon.homemate.dto.MessageResponse;
 import com.ganzithon.homemate.dto.RecommendationRequest;
 import com.ganzithon.homemate.dto.RecommendationRequestV2;
 import com.ganzithon.homemate.dto.RecommendationResponse;
+import com.ganzithon.homemate.dto.ResetResponse;
 import com.ganzithon.homemate.entity.HousingInfo;
 import com.ganzithon.homemate.service.HousingInfoService;
 import java.util.List;
@@ -240,6 +241,25 @@ public class HousingInfoController {
             log.error("추천 서비스 처리 중 오류 발생", e);
             return ResponseEntity.badRequest()
                     .body(new MessageResponse("추천 서비스 처리 중 오류가 발생했습니다: " + e.getMessage()));
+        }
+    }
+    
+    // 추천 결과 리셋 API
+    // 프롬프트, 지역 드롭다운, 추천 목록을 모두 초기 상태로 되돌림
+    @PostMapping("/recommend/reset")
+    public ResponseEntity<ResetResponse> resetRecommendation() {
+        try {
+            log.info("추천 결과 리셋 요청 수신");
+            
+            // 리셋 성공 응답 반환
+            ResetResponse resetResponse = ResetResponse.success();
+            
+            log.info("추천 결과 리셋 완료");
+            return ResponseEntity.ok(resetResponse);
+        } catch (Exception e) {
+            log.error("리셋 처리 중 오류 발생", e);
+            // 오류 발생 시에도 리셋은 성공한 것으로 처리
+            return ResponseEntity.ok(ResetResponse.success());
         }
     }
 }

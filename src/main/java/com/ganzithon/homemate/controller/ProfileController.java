@@ -15,6 +15,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor
@@ -48,11 +50,25 @@ public class ProfileController {
     @PutMapping(value = "/me", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProfileResponse> updateMyProfileWithImage(
             @AuthenticationPrincipal UserPrincipal principal,
-            @RequestPart(name = "profile", required = false) @Valid ProfileUpdateRequest request,
+            @RequestParam(name = "desiredArea", required = false) String desiredArea,
+            @RequestParam(name = "desiredMoveInDate", required = false) String desiredMoveInDate,
+            @RequestParam(name = "introduction", required = false) String introduction,
             @RequestPart(name = "profileImage", required = false) MultipartFile profileImage) {
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+        
+        // 문자열을 LocalDate로 변환
+        LocalDate moveInDate = null;
+        if (desiredMoveInDate != null && !desiredMoveInDate.isEmpty()) {
+            try {
+                moveInDate = LocalDate.parse(desiredMoveInDate);
+            } catch (Exception e) {
+                // 파싱 실패 시 null 유지
+            }
+        }
+        
+        ProfileUpdateRequest request = new ProfileUpdateRequest(desiredArea, moveInDate, introduction);
         ProfileResponse response = profileService.updateProfile(principal.id(), request, profileImage);
         return ResponseEntity.ok(response);
     }
