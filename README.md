@@ -21,8 +21,6 @@ UI, 플로우차트 : 김혜린, 서예준
 백엔드 : 양보윤, 정재희, 김혜린
 
 # 2. 주요 기능
-<br>
-
 ## 🔹 1. 메인 페이지
 ![main.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/main.png?raw=true)
 - 커뮤니티, 룸메이트, 정부지원 게시판의 최신 글을 통합 미리보기로 제공
