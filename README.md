@@ -25,7 +25,7 @@
 ## 2. 주요 기능
 
 ### 🔹 1. 메인 페이지
-![main.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/main.png)
+![main.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/main.png?raw=true)
 - 커뮤니티, 룸메이트, 정부지원 게시판의 최신 글을 통합 미리보기로 제공
 - 각 섹션별 “더보기” 버튼을 통해 해당 게시판으로 바로 이동
 - 메뉴바 팝업을 통해 프로필, 글쓰기, 카테고리, 로그인/로그아웃 기능 제공
