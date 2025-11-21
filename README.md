@@ -44,6 +44,7 @@
 - 메뉴바 팝업 지원
 
 ### 🔹 4. 룸메이트 찾기
+![roommate.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/roommate.png?raw=true)
 - 시/구 기반 지역 선택 후 해당 지역 룸메이트 게시글 조회
 - 게시글 작성/수정/삭제, 이미지 첨부, 좋아요·댓글 기능 제공
 - 오픈채팅방 링크 입력은 필수
