@@ -6,6 +6,7 @@ import com.ganzithon.homemate.entity.Post.FreePost;
 import com.ganzithon.homemate.entity.Post.FreePostImage;
 import com.ganzithon.homemate.entity.Post.PolicyPost;
 import com.ganzithon.homemate.entity.Post.PolicyPostImage;
+import com.ganzithon.homemate.entity.User;
 
 import java.time.Instant;
 import java.util.Comparator;
@@ -15,6 +16,10 @@ public class PostListItemResponse {
     private Long id;
     private String title;
     private Long userId;
+
+    // ✅ 목록에서는 작성자 loginId만 필요
+    private String writerLoginId;
+
     private Long viewCount;
     private Instant createdAt;
     private long commentCount;
@@ -34,7 +39,7 @@ public class PostListItemResponse {
     // ===============================================
     // ROOMMATE
     // ===============================================
-    public static PostListItemResponse fromRoommate(RoommatePost post) {
+    public static PostListItemResponse fromRoommate(RoommatePost post, User writer) {
 
         PostListItemResponse dto = new PostListItemResponse(
                 post.getId(),
@@ -44,7 +49,9 @@ public class PostListItemResponse {
                 post.getCreatedAt()
         );
 
-        // 썸네일 (첫 번째 이미지)
+        // 작성자 loginId만 세팅
+        dto.writerLoginId = (writer != null) ? writer.getLoginId() : null;
+
         String thumbnail = post.getImages().stream()
                 .sorted(Comparator.comparingInt(RoommatePostImage::getOrderNo))
                 .map(RoommatePostImage::getUrl)
@@ -58,7 +65,7 @@ public class PostListItemResponse {
     // ===============================================
     // FREE
     // ===============================================
-    public static PostListItemResponse fromFree(FreePost post) {
+    public static PostListItemResponse fromFree(FreePost post, User writer) {
 
         PostListItemResponse dto = new PostListItemResponse(
                 post.getId(),
@@ -67,6 +74,8 @@ public class PostListItemResponse {
                 post.getViewCount(),
                 post.getCreatedAt()
         );
+
+        dto.writerLoginId = (writer != null) ? writer.getLoginId() : null;
 
         String thumbnail = post.getImages().stream()
                 .sorted(Comparator.comparingInt(FreePostImage::getOrderNo))
@@ -81,7 +90,7 @@ public class PostListItemResponse {
     // ===============================================
     // POLICY
     // ===============================================
-    public static PostListItemResponse fromPolicy(PolicyPost post) {
+    public static PostListItemResponse fromPolicy(PolicyPost post, User writer) {
 
         PostListItemResponse dto = new PostListItemResponse(
                 post.getId(),
@@ -90,6 +99,8 @@ public class PostListItemResponse {
                 post.getViewCount(),
                 post.getCreatedAt()
         );
+
+        dto.writerLoginId = (writer != null) ? writer.getLoginId() : null;
 
         String thumbnail = post.getImages().stream()
                 .sorted(Comparator.comparingInt(PolicyPostImage::getOrderNo))
@@ -125,6 +136,14 @@ public class PostListItemResponse {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public String getWriterLoginId() {
+        return writerLoginId;
+    }
+
+    public void setWriterLoginId(String writerLoginId) {
+        this.writerLoginId = writerLoginId;
     }
 
     public Long getViewCount() {

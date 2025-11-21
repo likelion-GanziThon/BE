@@ -14,6 +14,7 @@ import com.ganzithon.homemate.entity.Post.FreePost;
 import com.ganzithon.homemate.entity.Post.FreePostImage;
 import com.ganzithon.homemate.entity.Post.RoommatePost;
 import com.ganzithon.homemate.entity.Post.RoommatePostImage;
+import com.ganzithon.homemate.entity.User;
 
 import com.ganzithon.homemate.repository.Post.PolicyPostRepository;
 import com.ganzithon.homemate.repository.Post.PolicyPostImageRepository;
@@ -21,6 +22,7 @@ import com.ganzithon.homemate.repository.Post.FreePostRepository;
 import com.ganzithon.homemate.repository.Post.FreePostImageRepository;
 import com.ganzithon.homemate.repository.Post.RoommatePostRepository;
 import com.ganzithon.homemate.repository.Post.RoommatePostImageRepository;
+import com.ganzithon.homemate.repository.UserRepository;
 
 import com.ganzithon.homemate.service.storage.ImageStorage;
 
@@ -34,6 +36,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class PolicyPostService {
@@ -43,8 +48,8 @@ public class PolicyPostService {
     private final ImageStorage imageStorage;
     private final CommentService commentService;
     private final PostLikeService postLikeService;
+    private final UserRepository userRepository;
 
-    // 이동용(다른 게시판)
     private final FreePostRepository freePostRepository;
     private final FreePostImageRepository freePostImageRepository;
     private final RoommatePostRepository roommatePostRepository;
@@ -59,7 +64,8 @@ public class PolicyPostService {
             FreePostRepository freePostRepository,
             FreePostImageRepository freePostImageRepository,
             RoommatePostRepository roommatePostRepository,
-            RoommatePostImageRepository roommatePostImageRepository
+            RoommatePostImageRepository roommatePostImageRepository,
+            UserRepository userRepository
     ) {
         this.policyPostRepository = policyPostRepository;
         this.policyPostImageRepository = policyPostImageRepository;
@@ -70,6 +76,7 @@ public class PolicyPostService {
         this.freePostImageRepository = freePostImageRepository;
         this.roommatePostRepository = roommatePostRepository;
         this.roommatePostImageRepository = roommatePostImageRepository;
+        this.userRepository = userRepository;
     }
 
     // =======================
@@ -335,17 +342,23 @@ public class PolicyPostService {
         policyPostRepository.delete(post); // cascade 로 image row 삭제
     }
 
-    // =======================
     // LIST
-    // =======================
     @Transactional(readOnly = true)
     public Page<PostListItemResponse> getList(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<PolicyPost> posts =
                 policyPostRepository.findAllByOrderByCreatedAtDesc(pageable);
 
+        Set<Long> userIds = posts.stream()
+                .map(PolicyPost::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         return posts.map(post -> {
-            PostListItemResponse dto = PostListItemResponse.fromPolicy(post);
+            User writer = userMap.get(post.getUserId());
+            PostListItemResponse dto = PostListItemResponse.fromPolicy(post, writer);
 
             long commentCount = commentService.getCommentCount(
                     PostCategory.POLICY,
@@ -357,9 +370,7 @@ public class PolicyPostService {
         });
     }
 
-    // =======================
-    // SEARCH LIST (검색만, 지역 필터 없음)
-    // =======================
+    // SEARCH LIST
     @Transactional(readOnly = true)
     public Page<PostListItemResponse> searchList(
             int page,
@@ -382,8 +393,16 @@ public class PolicyPostService {
                     throw new IllegalArgumentException("지원하지 않는 검색 타입입니다: " + searchType);
         }
 
+        Set<Long> userIds = posts.stream()
+                .map(PolicyPost::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         return posts.map(post -> {
-            PostListItemResponse dto = PostListItemResponse.fromPolicy(post);
+            User writer = userMap.get(post.getUserId());
+            PostListItemResponse dto = PostListItemResponse.fromPolicy(post, writer);
 
             long commentCount = commentService.getCommentCount(
                     PostCategory.POLICY,
@@ -395,10 +414,7 @@ public class PolicyPostService {
         });
     }
 
-
-    // =======================
-    // DETAIL (+ 조회수 증가)
-    // =======================
+    // DETAIL
     @Transactional
     public PostDetailResponse getDetailAndIncreaseView(Long postId) {
         PolicyPost post = policyPostRepository.findById(postId)
@@ -406,6 +422,9 @@ public class PolicyPostService {
 
         post.increaseViewCount();
 
-        return PostDetailResponse.fromPolicy(post);
+        User writer = userRepository.findById(post.getUserId())
+                .orElseThrow(() -> new IllegalStateException("작성자 정보를 찾을 수 없습니다."));
+
+        return PostDetailResponse.fromPolicy(post, writer);
     }
 }

@@ -7,13 +7,13 @@ import com.ganzithon.homemate.dto.Post.PostListItemResponse;
 import com.ganzithon.homemate.dto.Post.PostDetailResponse;
 import com.ganzithon.homemate.dto.Post.SearchType;
 
-
 import com.ganzithon.homemate.entity.Post.RoommatePost;
 import com.ganzithon.homemate.entity.Post.RoommatePostImage;
 import com.ganzithon.homemate.entity.Post.FreePost;
 import com.ganzithon.homemate.entity.Post.FreePostImage;
 import com.ganzithon.homemate.entity.Post.PolicyPost;
 import com.ganzithon.homemate.entity.Post.PolicyPostImage;
+import com.ganzithon.homemate.entity.User;
 
 import com.ganzithon.homemate.repository.Post.RoommatePostRepository;
 import com.ganzithon.homemate.repository.Post.RoommatePostImageRepository;
@@ -21,6 +21,7 @@ import com.ganzithon.homemate.repository.Post.FreePostRepository;
 import com.ganzithon.homemate.repository.Post.FreePostImageRepository;
 import com.ganzithon.homemate.repository.Post.PolicyPostRepository;
 import com.ganzithon.homemate.repository.Post.PolicyPostImageRepository;
+import com.ganzithon.homemate.repository.UserRepository;
 
 import com.ganzithon.homemate.service.storage.ImageStorage;
 
@@ -34,6 +35,9 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class RoommatePostService {
@@ -44,11 +48,11 @@ public class RoommatePostService {
     private final CommentService commentService;
     private final PostLikeService postLikeService;
 
-    // 이동용(다른 게시판)
     private final FreePostRepository freePostRepository;
     private final FreePostImageRepository freePostImageRepository;
     private final PolicyPostRepository policyPostRepository;
     private final PolicyPostImageRepository policyPostImageRepository;
+    private final UserRepository userRepository;
 
     public RoommatePostService(
             RoommatePostRepository roommatePostRepository,
@@ -59,7 +63,8 @@ public class RoommatePostService {
             FreePostRepository freePostRepository,
             FreePostImageRepository freePostImageRepository,
             PolicyPostRepository policyPostRepository,
-            PolicyPostImageRepository policyPostImageRepository
+            PolicyPostImageRepository policyPostImageRepository,
+            UserRepository userRepository
     ) {
         this.roommatePostRepository = roommatePostRepository;
         this.roommatePostImageRepository = roommatePostImageRepository;
@@ -70,6 +75,7 @@ public class RoommatePostService {
         this.freePostImageRepository = freePostImageRepository;
         this.policyPostRepository = policyPostRepository;
         this.policyPostImageRepository = policyPostImageRepository;
+        this.userRepository = userRepository;
     }
 
     // =======================
@@ -317,8 +323,17 @@ public class RoommatePostService {
         Page<RoommatePost> posts =
                 roommatePostRepository.findAllByOrderByCreatedAtDesc(pageable);
 
+        // 작성자들 한 번에 조회
+        Set<Long> userIds = posts.stream()
+                .map(RoommatePost::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         return posts.map(post -> {
-            PostListItemResponse dto = PostListItemResponse.fromRoommate(post);
+            User writer = userMap.get(post.getUserId());
+            PostListItemResponse dto = PostListItemResponse.fromRoommate(post, writer);
 
             long commentCount = commentService.getCommentCount(
                     PostCategory.ROOMMATE,
@@ -339,8 +354,8 @@ public class RoommatePostService {
             int size,
             SearchType searchType,
             String keyword,
-            String sidoCode,    // null 가능
-            String sigunguCode  // null 가능
+            String sidoCode,
+            String sigunguCode
     ) {
         Pageable pageable = PageRequest.of(page, size);
 
@@ -352,17 +367,14 @@ public class RoommatePostService {
         switch (searchType) {
             case TITLE -> {
                 if (!hasSido) {
-                    // 제목 + 지역 X
                     posts = roommatePostRepository
                             .findByTitleContainingIgnoreCaseOrderByCreatedAtDesc(keyword, pageable);
                 } else if (!hasSigungu) {
-                    // 제목 + 시/도만
                     posts = roommatePostRepository
                             .findByTitleContainingIgnoreCaseAndSidoCodeOrderByCreatedAtDesc(
                                     keyword, sidoCode, pageable
                             );
                 } else {
-                    // 제목 + 시/도 + 시/군/구
                     posts = roommatePostRepository
                             .findByTitleContainingIgnoreCaseAndSidoCodeAndSigunguCodeOrderByCreatedAtDesc(
                                     keyword, sidoCode, sigunguCode, pageable
@@ -385,13 +397,20 @@ public class RoommatePostService {
                             );
                 }
             }
-
             default -> throw new IllegalArgumentException("지원하지 않는 검색 타입입니다: " + searchType);
         }
 
-        // 목록 DTO + 댓글 수 세팅
+        // 작성자들 한 번에 조회
+        Set<Long> userIds = posts.stream()
+                .map(RoommatePost::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         return posts.map(post -> {
-            PostListItemResponse dto = PostListItemResponse.fromRoommate(post);
+            User writer = userMap.get(post.getUserId());
+            PostListItemResponse dto = PostListItemResponse.fromRoommate(post, writer);
 
             long commentCount = commentService.getCommentCount(
                     PostCategory.ROOMMATE,
@@ -403,7 +422,6 @@ public class RoommatePostService {
         });
     }
 
-
     // =======================
     // DETAIL (+ 조회수 증가)
     // =======================
@@ -414,6 +432,9 @@ public class RoommatePostService {
 
         post.increaseViewCount();
 
-        return PostDetailResponse.fromRoommate(post);
+        User writer = userRepository.findById(post.getUserId())
+                .orElseThrow(() -> new IllegalStateException("작성자 정보를 찾을 수 없습니다."));
+
+        return PostDetailResponse.fromRoommate(post, writer);
     }
 }
