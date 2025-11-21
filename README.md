@@ -31,6 +31,7 @@
 - 메뉴바 팝업을 통해 프로필, 글쓰기, 카테고리, 로그인/로그아웃 기능 제공
 
 ### 🔹 2. 커뮤니티 기능
+![community.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/community.png?raw=true)
 - 시/구 기반 지역 선택 후 해당 지역 게시글만 조회
 - 게시글 작성/수정/삭제 및 이미지 첨부(최대 4장) 지원
 - 좋아요 및 댓글 기능 제공
