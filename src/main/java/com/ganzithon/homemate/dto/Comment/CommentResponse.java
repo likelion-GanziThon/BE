@@ -9,8 +9,8 @@ public class CommentResponse {
 
     private Long id;
     private Long userId;
-    private String writerLoginId;            // ✅ 추가
-    private String writerProfileImagePath;   // ✅ 추가
+    private String writerLoginId;
+    private String writerProfileImagePath;
     private String content;
     private Instant createdAt;
     private Instant updatedAt;
@@ -27,8 +27,10 @@ public class CommentResponse {
         dto.createdAt = comment.getCreatedAt();
         dto.updatedAt = comment.getUpdatedAt();
 
-        dto.writerLoginId = writer != null ? writer.getLoginId() : null;
-        dto.writerProfileImagePath = writer != null ? writer.getProfileImagePath() : null;
+        if (writer != null) {
+            dto.writerLoginId = writer.getLoginId();
+            dto.writerProfileImagePath = "/api/profile/image/" + writer.getId();
+        }
 
         return dto;
     }
