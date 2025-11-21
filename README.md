@@ -15,9 +15,9 @@
 # 목차 설명
 
 ## 1. 개요
-프로젝트 이름: 홈메이트
-프로젝트 기간: 2025.10-2025.11
-개발 언어: Node.js, React, TypeScript, Java, Spring
+프로젝트 이름: 홈메이트<br>
+프로젝트 기간: 2025.10-2025.11<br>
+개발 언어: Node.js, React, TypeScript, Java, Spring<br>
 팀 이름: 양보윤, 임재준, 서예준, 정재희, 김혜린
 
 ---
