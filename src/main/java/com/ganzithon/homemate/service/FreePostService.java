@@ -14,6 +14,7 @@ import com.ganzithon.homemate.entity.Post.RoommatePost;
 import com.ganzithon.homemate.entity.Post.RoommatePostImage;
 import com.ganzithon.homemate.entity.Post.PolicyPost;
 import com.ganzithon.homemate.entity.Post.PolicyPostImage;
+import com.ganzithon.homemate.entity.User;
 
 import com.ganzithon.homemate.repository.Post.FreePostRepository;
 import com.ganzithon.homemate.repository.Post.FreePostImageRepository;
@@ -21,6 +22,7 @@ import com.ganzithon.homemate.repository.Post.RoommatePostRepository;
 import com.ganzithon.homemate.repository.Post.RoommatePostImageRepository;
 import com.ganzithon.homemate.repository.Post.PolicyPostRepository;
 import com.ganzithon.homemate.repository.Post.PolicyPostImageRepository;
+import com.ganzithon.homemate.repository.UserRepository;
 
 import com.ganzithon.homemate.service.storage.ImageStorage;
 
@@ -34,6 +36,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class FreePostService {
@@ -43,8 +48,8 @@ public class FreePostService {
     private final ImageStorage imageStorage;
     private final CommentService commentService;
     private final PostLikeService postLikeService;
+    private final UserRepository userRepository;
 
-    // 다른 게시판들
     private final RoommatePostRepository roommatePostRepository;
     private final RoommatePostImageRepository roommatePostImageRepository;
     private final PolicyPostRepository policyPostRepository;
@@ -59,7 +64,8 @@ public class FreePostService {
             RoommatePostRepository roommatePostRepository,
             RoommatePostImageRepository roommatePostImageRepository,
             PolicyPostRepository policyPostRepository,
-            PolicyPostImageRepository policyPostImageRepository
+            PolicyPostImageRepository policyPostImageRepository,
+            UserRepository userRepository
     ) {
         this.freePostRepository = freePostRepository;
         this.freePostImageRepository = freePostImageRepository;
@@ -70,6 +76,7 @@ public class FreePostService {
         this.roommatePostImageRepository = roommatePostImageRepository;
         this.policyPostRepository = policyPostRepository;
         this.policyPostImageRepository = policyPostImageRepository;
+        this.userRepository = userRepository;
     }
 
     // ========================================
@@ -322,17 +329,23 @@ public class FreePostService {
         freePostRepository.delete(post);
     }
 
-    // ========================================
-    // LIST (최신순, 페이징)
-    // ========================================
+    // LIST
     @Transactional(readOnly = true)
     public Page<PostListItemResponse> getList(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<FreePost> posts =
                 freePostRepository.findAllByOrderByCreatedAtDesc(pageable);
 
+        Set<Long> userIds = posts.stream()
+                .map(FreePost::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         return posts.map(post -> {
-            PostListItemResponse dto = PostListItemResponse.fromFree(post);
+            User writer = userMap.get(post.getUserId());
+            PostListItemResponse dto = PostListItemResponse.fromFree(post, writer);
 
             long commentCount = commentService.getCommentCount(
                     PostCategory.FREE,
@@ -344,17 +357,15 @@ public class FreePostService {
         });
     }
 
-    // ========================================
-    // SEARCH LIST (검색 + 지역 필터)
-    // ========================================
+    // SEARCH LIST
     @Transactional(readOnly = true)
     public Page<PostListItemResponse> searchList(
             int page,
             int size,
             SearchType searchType,
             String keyword,
-            String sidoCode,    // null 가능
-            String sigunguCode  // null 가능
+            String sidoCode,
+            String sigunguCode
     ) {
         Pageable pageable = PageRequest.of(page, size);
 
@@ -396,12 +407,19 @@ public class FreePostService {
                             );
                 }
             }
-
             default -> throw new IllegalArgumentException("지원하지 않는 검색 타입입니다: " + searchType);
         }
 
+        Set<Long> userIds = posts.stream()
+                .map(FreePost::getUserId)
+                .collect(Collectors.toSet());
+
+        Map<Long, User> userMap = userRepository.findByIdIn(userIds).stream()
+                .collect(Collectors.toMap(User::getId, u -> u));
+
         return posts.map(post -> {
-            PostListItemResponse dto = PostListItemResponse.fromFree(post);
+            User writer = userMap.get(post.getUserId());
+            PostListItemResponse dto = PostListItemResponse.fromFree(post, writer);
 
             long commentCount = commentService.getCommentCount(
                     PostCategory.FREE,
@@ -413,10 +431,7 @@ public class FreePostService {
         });
     }
 
-
-    // ========================================
-    // DETAIL (+ 조회수 증가)
-    // ========================================
+    // DETAIL
     @Transactional
     public PostDetailResponse getDetailAndIncreaseView(Long postId) {
         FreePost post = freePostRepository.findById(postId)
@@ -424,6 +439,9 @@ public class FreePostService {
 
         post.increaseViewCount();
 
-        return PostDetailResponse.fromFree(post);
+        User writer = userRepository.findById(post.getUserId())
+                .orElseThrow(() -> new IllegalStateException("작성자 정보를 찾을 수 없습니다."));
+
+        return PostDetailResponse.fromFree(post, writer);
     }
 }
