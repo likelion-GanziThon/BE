@@ -1,0 +1,56 @@
+name: CI/CD - Deploy to EC2
+
+on:
+  push:
+    branches: [ "main" ]   # main에 push되면 배포
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1) 코드 체크아웃
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2) JDK 설정
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'gradle'
+
+      # 3) Gradle 빌드
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle
+        run: ./gradlew clean build -x test  # test 빼고 싶으면 -x test, 아니면 제거
+
+      # 4) 빌드 결과 확인 (선택)
+      - name: List build libs
+        run: ls -al build/libs
+
+      # 5) EC2로 JAR 업로드 (scp)
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "build/libs/homemate-0.0.1-SNAPSHOT.jar"
+          target: ${{ secrets.EC2_DEPLOY_DIR }}
+
+      # 6) EC2에서 deploy.sh 실행 (ssh)
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ubuntu/homemate/deploy
+            chmod +x deploy.sh
+            ./deploy.sh
+
