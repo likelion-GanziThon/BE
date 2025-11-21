@@ -39,6 +39,7 @@
 - 메뉴바 팝업 지원(프로필, 글쓰기, 로그인/로그아웃 등)
 
 ### 🔹 3. 주거 정보 제공
+![주거정보.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A3%BC%EA%B1%B0%EC%A0%95%EB%B3%B4.png?raw=true)
 - 공공데이터 API를 활용한 공공임대주택 단지 정보 제공
 - 텍스트 기반 조건 입력 → AI가 맞춤형 정보 추천
 - 메뉴바 팝업 지원
@@ -52,7 +53,7 @@
 - 메뉴바 팝업 지원
 
 ### 🔹 5. 정부 주거지원 정보
-![정부](https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A0%95%EB%B6%80%EC%A3%BC%EA%B1%B0.png?raw=true)
+![정부주거.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A0%95%EB%B6%80%EC%A3%BC%EA%B1%B0.png?raw=true)
 - 정부 지원 정보 게시판 운영(작성/수정/삭제, 이미지 첨부, 좋아요·댓글 기능)
 - 제목/내용 검색 기능 제공
 - 메뉴바 팝업 지원
