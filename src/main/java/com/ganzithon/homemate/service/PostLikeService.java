@@ -1,8 +1,8 @@
 package com.ganzithon.homemate.service;
 
-import com.ganzithon.homemate.dto.PostCategory;
-import com.ganzithon.homemate.entity.PostLike;
-import com.ganzithon.homemate.repository.PostLikeRepository;
+import com.ganzithon.homemate.dto.Post.PostCategory;
+import com.ganzithon.homemate.entity.Post.PostLike;
+import com.ganzithon.homemate.repository.Post.PostLikeRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

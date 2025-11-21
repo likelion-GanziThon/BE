@@ -1,8 +1,8 @@
 package com.ganzithon.homemate.controller;
 
-import com.ganzithon.homemate.dto.LoginRequest;
-import com.ganzithon.homemate.dto.LoginResponse;
-import com.ganzithon.homemate.dto.RegisterRequest;
+import com.ganzithon.homemate.dto.Login.LoginRequest;
+import com.ganzithon.homemate.dto.Login.LoginResponse;
+import com.ganzithon.homemate.dto.Login.RegisterRequest;
 import com.ganzithon.homemate.dto.MessageResponse;
 import com.ganzithon.homemate.dto.TokenResponse;
 import com.ganzithon.homemate.service.AuthService;

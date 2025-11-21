@@ -1,6 +1,6 @@
 package com.ganzithon.homemate.repository;
 
-import com.ganzithon.homemate.dto.PostCategory;
+import com.ganzithon.homemate.dto.Post.PostCategory;
 import com.ganzithon.homemate.entity.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
 

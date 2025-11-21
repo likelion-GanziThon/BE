@@ -1,10 +1,10 @@
 package com.ganzithon.homemate.controller;
 
 import com.ganzithon.homemate.dto.MessageResponse;
-import com.ganzithon.homemate.dto.RecommendationRequest;
-import com.ganzithon.homemate.dto.RecommendationRequestV2;
-import com.ganzithon.homemate.dto.RecommendationResponse;
-import com.ganzithon.homemate.dto.ResetResponse;
+import com.ganzithon.homemate.dto.Recomendation.RecommendationRequest;
+import com.ganzithon.homemate.dto.Recomendation.RecommendationRequestV2;
+import com.ganzithon.homemate.dto.Recomendation.RecommendationResponse;
+import com.ganzithon.homemate.dto.Recomendation.ResetResponse;
 import com.ganzithon.homemate.entity.HousingInfo;
 import com.ganzithon.homemate.service.HousingInfoService;
 import java.util.List;

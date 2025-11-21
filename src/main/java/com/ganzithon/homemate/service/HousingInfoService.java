@@ -1,7 +1,7 @@
 package com.ganzithon.homemate.service;
 
 import com.ganzithon.homemate.dto.HousingApiResponse;
-import com.ganzithon.homemate.dto.RecommendationResponse;
+import com.ganzithon.homemate.dto.Recomendation.RecommendationResponse;
 import com.ganzithon.homemate.entity.HousingInfo;
 import com.ganzithon.homemate.repository.HousingInfoRepository;
 import java.util.ArrayList;

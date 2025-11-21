@@ -1,6 +1,6 @@
 package com.ganzithon.homemate.entity;
 
-import com.ganzithon.homemate.dto.LoginResponse;
+import com.ganzithon.homemate.dto.Login.LoginResponse;
 import com.ganzithon.homemate.jwt.JwtTokenProvider;
 import com.ganzithon.homemate.security.UserPrincipal;
 import jakarta.persistence.Column;

@@ -1,7 +1,7 @@
 package com.ganzithon.homemate.service;
 
-import com.ganzithon.homemate.dto.ProfileResponse;
-import com.ganzithon.homemate.dto.ProfileUpdateRequest;
+import com.ganzithon.homemate.dto.Profile.ProfileResponse;
+import com.ganzithon.homemate.dto.Profile.ProfileUpdateRequest;
 import com.ganzithon.homemate.entity.User;
 import com.ganzithon.homemate.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

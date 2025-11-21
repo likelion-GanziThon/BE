@@ -1,26 +1,26 @@
 package com.ganzithon.homemate.service;
 
-import com.ganzithon.homemate.dto.CreatePostRequest;
-import com.ganzithon.homemate.dto.UpdatePostRequest;
-import com.ganzithon.homemate.dto.PostCategory;
-import com.ganzithon.homemate.dto.PostListItemResponse;
-import com.ganzithon.homemate.dto.PostDetailResponse;
-import com.ganzithon.homemate.dto.SearchType;
+import com.ganzithon.homemate.dto.Post.CreatePostRequest;
+import com.ganzithon.homemate.dto.Post.UpdatePostRequest;
+import com.ganzithon.homemate.dto.Post.PostCategory;
+import com.ganzithon.homemate.dto.Post.PostListItemResponse;
+import com.ganzithon.homemate.dto.Post.PostDetailResponse;
+import com.ganzithon.homemate.dto.Post.SearchType;
 
 
-import com.ganzithon.homemate.entity.RoommatePost;
-import com.ganzithon.homemate.entity.RoommatePostImage;
-import com.ganzithon.homemate.entity.FreePost;
-import com.ganzithon.homemate.entity.FreePostImage;
-import com.ganzithon.homemate.entity.PolicyPost;
-import com.ganzithon.homemate.entity.PolicyPostImage;
+import com.ganzithon.homemate.entity.Post.RoommatePost;
+import com.ganzithon.homemate.entity.Post.RoommatePostImage;
+import com.ganzithon.homemate.entity.Post.FreePost;
+import com.ganzithon.homemate.entity.Post.FreePostImage;
+import com.ganzithon.homemate.entity.Post.PolicyPost;
+import com.ganzithon.homemate.entity.Post.PolicyPostImage;
 
-import com.ganzithon.homemate.repository.RoommatePostRepository;
-import com.ganzithon.homemate.repository.RoommatePostImageRepository;
-import com.ganzithon.homemate.repository.FreePostRepository;
-import com.ganzithon.homemate.repository.FreePostImageRepository;
-import com.ganzithon.homemate.repository.PolicyPostRepository;
-import com.ganzithon.homemate.repository.PolicyPostImageRepository;
+import com.ganzithon.homemate.repository.Post.RoommatePostRepository;
+import com.ganzithon.homemate.repository.Post.RoommatePostImageRepository;
+import com.ganzithon.homemate.repository.Post.FreePostRepository;
+import com.ganzithon.homemate.repository.Post.FreePostImageRepository;
+import com.ganzithon.homemate.repository.Post.PolicyPostRepository;
+import com.ganzithon.homemate.repository.Post.PolicyPostImageRepository;
 
 import com.ganzithon.homemate.service.storage.ImageStorage;
 
