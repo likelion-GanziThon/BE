@@ -52,6 +52,7 @@
 - 메뉴바 팝업 지원
 
 ### 🔹 5. 정부 주거지원 정보
+![정부](https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A0%95%EB%B6%80%EC%A3%BC%EA%B1%B0.png?raw=true)
 - 정부 지원 정보 게시판 운영(작성/수정/삭제, 이미지 첨부, 좋아요·댓글 기능)
 - 제목/내용 검색 기능 제공
 - 메뉴바 팝업 지원
