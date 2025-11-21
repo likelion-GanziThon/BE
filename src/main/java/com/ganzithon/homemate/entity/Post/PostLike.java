@@ -1,19 +1,22 @@
-package com.ganzithon.homemate.entity;
+package com.ganzithon.homemate.entity.Post;
 
 import com.ganzithon.homemate.dto.Post.PostCategory;
 import jakarta.persistence.*;
-import lombok.Getter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
-@Getter
 @Entity
-@Table(name = "comment")
-public class Comment {
+@Table(
+        name = "post_like",
+        uniqueConstraints = {
+                @UniqueConstraint(columnNames = {"category", "post_id", "user_id"})
+        }
+)
+public class PostLike {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -26,32 +29,20 @@ public class Comment {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Lob
-    @Column(nullable = false)
-    private String content;
-
     @CreationTimestamp
     @Column(updatable = false)
     private Instant createdAt;
 
-    @UpdateTimestamp
-    private Instant updatedAt;
+    protected PostLike() {}
 
-    protected Comment() {}
-
-    private Comment(PostCategory category, Long postId, Long userId, String content) {
+    private PostLike(PostCategory category, Long postId, Long userId) {
         this.category = category;
         this.postId = postId;
         this.userId = userId;
-        this.content = content;
     }
 
-    public static Comment create(PostCategory category, Long postId, Long userId, String content) {
-        return new Comment(category, postId, userId, content);
-    }
-
-    public void updateContent(String content) {
-        this.content = content;
+    public static PostLike create(PostCategory category, Long postId, Long userId) {
+        return new PostLike(category, postId, userId);
     }
 
     public void moveTo(PostCategory category, Long postId) {
@@ -59,3 +50,4 @@ public class Comment {
         this.postId = postId;
     }
 }
+

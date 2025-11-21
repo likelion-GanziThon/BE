@@ -1,7 +1,7 @@
 package com.ganzithon.homemate.controller;
 
-import com.ganzithon.homemate.dto.ProfileResponse;
-import com.ganzithon.homemate.dto.ProfileUpdateRequest;
+import com.ganzithon.homemate.dto.Profile.ProfileResponse;
+import com.ganzithon.homemate.dto.Profile.ProfileUpdateRequest;
 import com.ganzithon.homemate.security.UserPrincipal;
 import com.ganzithon.homemate.service.ProfileService;
 import jakarta.validation.Valid;

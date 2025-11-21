@@ -1,9 +1,9 @@
 package com.ganzithon.homemate.service;
 
-import com.ganzithon.homemate.dto.CommentResponse;
-import com.ganzithon.homemate.dto.CreateCommentRequest;
-import com.ganzithon.homemate.dto.PostCategory;
-import com.ganzithon.homemate.dto.UpdateCommentRequest;
+import com.ganzithon.homemate.dto.Comment.CommentResponse;
+import com.ganzithon.homemate.dto.Comment.CreateCommentRequest;
+import com.ganzithon.homemate.dto.Post.PostCategory;
+import com.ganzithon.homemate.dto.Comment.UpdateCommentRequest;
 import com.ganzithon.homemate.entity.Comment;
 import com.ganzithon.homemate.repository.CommentRepository;
 import org.springframework.security.access.AccessDeniedException;

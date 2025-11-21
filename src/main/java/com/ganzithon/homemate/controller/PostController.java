@@ -1,12 +1,12 @@
 package com.ganzithon.homemate.controller;
 
-import com.ganzithon.homemate.dto.CreatePostRequest;
-import com.ganzithon.homemate.dto.UpdatePostRequest;
-import com.ganzithon.homemate.dto.PostCategory;
-import com.ganzithon.homemate.dto.PostDetailResponse;
-import com.ganzithon.homemate.dto.CreateCommentRequest;
-import com.ganzithon.homemate.dto.UpdateCommentRequest;
-import com.ganzithon.homemate.dto.CommentResponse;
+import com.ganzithon.homemate.dto.Post.CreatePostRequest;
+import com.ganzithon.homemate.dto.Post.UpdatePostRequest;
+import com.ganzithon.homemate.dto.Post.PostCategory;
+import com.ganzithon.homemate.dto.Post.PostDetailResponse;
+import com.ganzithon.homemate.dto.Comment.CreateCommentRequest;
+import com.ganzithon.homemate.dto.Comment.UpdateCommentRequest;
+import com.ganzithon.homemate.dto.Comment.CommentResponse;
 import com.ganzithon.homemate.security.UserPrincipal;
 import com.ganzithon.homemate.service.RoommatePostService;
 import com.ganzithon.homemate.service.FreePostService;
@@ -14,10 +14,10 @@ import com.ganzithon.homemate.service.PolicyPostService;
 import com.ganzithon.homemate.service.PostLikeService;
 import com.ganzithon.homemate.service.CommentService;
 import com.ganzithon.homemate.dto.PageResponse;
-import com.ganzithon.homemate.dto.PostListItemResponse;
-import com.ganzithon.homemate.dto.SearchType;
+import com.ganzithon.homemate.dto.Post.PostListItemResponse;
+import com.ganzithon.homemate.dto.Post.SearchType;
 import com.ganzithon.homemate.dto.ApiResponse;
-import com.ganzithon.homemate.dto.HomePostsResponse;
+import com.ganzithon.homemate.dto.Post.HomePostsResponse;
 
 
 import jakarta.validation.Valid;
