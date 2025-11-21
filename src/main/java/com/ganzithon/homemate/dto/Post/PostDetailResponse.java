@@ -48,8 +48,10 @@ public class PostDetailResponse {
         dto.content = post.getContent();
         dto.userId = post.getUserId();
 
-        dto.writerLoginId = writer != null ? writer.getLoginId() : null;
-        dto.writerProfileImagePath = writer != null ? writer.getProfileImagePath() : null;
+        if (writer != null) {
+            dto.writerLoginId = writer.getLoginId();
+            dto.writerProfileImagePath = "/api/profile/image/" + writer.getId();
+        }
 
         dto.viewCount = post.getViewCount();
         dto.createdAt = post.getCreatedAt();
@@ -71,8 +73,10 @@ public class PostDetailResponse {
         dto.content = post.getContent();
         dto.userId = post.getUserId();
 
-        dto.writerLoginId = writer != null ? writer.getLoginId() : null;
-        dto.writerProfileImagePath = writer != null ? writer.getProfileImagePath() : null;
+        if (writer != null) {
+            dto.writerLoginId = writer.getLoginId();
+            dto.writerProfileImagePath = "/api/profile/image/" + writer.getId();
+        }
 
         dto.viewCount = post.getViewCount();
         dto.createdAt = post.getCreatedAt();
@@ -93,8 +97,10 @@ public class PostDetailResponse {
         dto.content = post.getContent();
         dto.userId = post.getUserId();
 
-        dto.writerLoginId = writer != null ? writer.getLoginId() : null;
-        dto.writerProfileImagePath = writer != null ? writer.getProfileImagePath() : null;
+        if (writer != null) {
+            dto.writerLoginId = writer.getLoginId();
+            dto.writerProfileImagePath = "/api/profile/image/" + writer.getId();
+        }
 
         dto.viewCount = post.getViewCount();
         dto.createdAt = post.getCreatedAt();
