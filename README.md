@@ -10,24 +10,22 @@
 2. **주요 기능**
 
 
-# 목차 설명
-
-## 1. 개요
+# 1. 개요
 프로젝트 이름: 🏠홈메이트<br>
 프로젝트 기간: 2025.10-2025.11<br>
 개발 언어: Node.js, React, TypeScript, Java, Spring<br>
 팀 이름: 양보윤, 임재준, 서예준, 정재희, 김혜린
 
 
-## 2. 주요 기능
+# 2. 주요 기능
 
-### 🔹 1. 메인 페이지
+## 🔹 1. 메인 페이지
 ![main.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/main.png?raw=true)
 - 커뮤니티, 룸메이트, 정부지원 게시판의 최신 글을 통합 미리보기로 제공
 - 각 섹션별 “더보기” 버튼을 통해 해당 게시판으로 바로 이동
 - 메뉴바 팝업을 통해 프로필, 글쓰기, 카테고리, 로그인/로그아웃 기능 제공
 
-### 🔹 2. 커뮤니티 기능
+## 🔹 2. 커뮤니티 기능
 ![community.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/community.png?raw=true)
 - 시/구 기반 지역 선택 후 해당 지역 게시글만 조회
 - 게시글 작성/수정/삭제 및 이미지 첨부(최대 4장) 지원
@@ -35,13 +33,13 @@
 - 제목/내용 기준으로 검색 가능
 - 메뉴바 팝업 지원(프로필, 글쓰기, 로그인/로그아웃 등)
 
-### 🔹 3. 주거 정보 제공
+## 🔹 3. 주거 정보 제공
 ![주거정보.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A3%BC%EA%B1%B0%EC%A0%95%EB%B3%B4.png?raw=true)
 - 공공데이터 API를 활용한 공공임대주택 단지 정보 제공
 - 텍스트 기반 조건 입력 → AI가 맞춤형 정보 추천
 - 메뉴바 팝업 지원
 
-### 🔹 4. 룸메이트 찾기
+## 🔹 4. 룸메이트 찾기
 ![roommate.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/roommate.png?raw=true)
 - 시/구 기반 지역 선택 후 해당 지역 룸메이트 게시글 조회
 - 게시글 작성/수정/삭제, 이미지 첨부, 좋아요·댓글 기능 제공
@@ -49,7 +47,7 @@
 - 제목/내용 기준 검색 가능
 - 메뉴바 팝업 지원
 
-### 🔹 5. 정부 주거지원 정보
+## 🔹 5. 정부 주거지원 정보
 ![정부주거.png](https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A0%95%EB%B6%80%EC%A3%BC%EA%B1%B0.png?raw=true)
 - 정부 지원 정보 게시판 운영(작성/수정/삭제, 이미지 첨부, 좋아요·댓글 기능)
 - 제목/내용 검색 기능 제공
