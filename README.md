@@ -1,125 +1,254 @@
-# 📌 Triptailor
+# 🏠 HomeMate
 
-<img src="https://i.ibb.co/3950PzNp/image.png" alt="Triptailor" width="500px">
-<br>
+<img width="407" height="157" alt="image" src="https://github.com/user-attachments/assets/e7f0d399-2e49-4ce5-8406-b5859b75e651" />
 
-2025 Pirogramming : **Triptailor**  
+2025 멋쟁이 사자처럼 Ganzithon : **HomeMate**  
 <br/><br/>
+프로젝트 기간 : 2025.10-2025.11
+<br/><br/>
+링크 : https://www.homemates.click/
 
-링크 : https://triptailor.kro.kr/
+## 🏙️ HomeMate
 
-## 🚀 Triptailor
+> 청년층을 위한 주거 커뮤니티 웹 서비스<br/><br/>
+> 공공데이터를 기반으로 한 공공임대주택 데이터를 제공<br/><br/>
+> 해당 지역 거주자들이 자유롭게 정보를 공유하는 지역 기반 주거 커뮤니티<br/><br/>
+> 룸메이트 기능을 통해 비슷한 생활 패턴과 가치관을 가진 사람들과 연결되어 안정적인 공동 거주 환경 조성 및 비용 부담 절감 <br/><br/>
 
-> “여행지를 어떻게 선택하시나요?”  
-> 여러분은 지금 **이색적인 여행**을 하고 계신가요?
+- 공공데이터 기반의 공공임대주택 정보 제공, 실제 거주자들이 자유롭게 의견을 나누는 지역 기반 커뮤니티, 청년 1인 가구의 부담을 낮추기 위한 룸메이트 매칭 게시판을 통해 
+기존 부동산 플랫폼에서 부족했던 현실적 주거 정보와 신뢰성 높은 데이터를 모두 제공합니다.<br/><br/>
 
-Triptailor는 단순한 여행 정보 제공을 넘어, **AI 기반 개인 맞춤 여행 큐레이션 서비스**입니다.  
-사용자의 취향, 관심 태그, 그리고 실제 여행자들의 생생한 후기를 바탕으로 새로운 여행지를 발견할 수 있도록 도와줍니다.
-
-
-AI와 데이터 기반으로 여행을 **쉽고 즐겁게 계획**할 수 있는 플랫폼  
-- 추천 → 루트 생성 → 리뷰 → 재추천까지 **선순환 구조**를 가진 여행 생태계  
-- 여행 준비 과정의 피로도를 줄이고, **여행의 즐거움**에 집중할 수 있도록 설계
-
----
-
-### 📌 주요 포인트
-- 🧭 **개인 맞춤 여행 추천**  
-  벡터 검색 + AI 기반 추천으로 나에게 꼭 맞는 장소를 제안
-- 🗺️ **루트 생성 & 공유**  
-  여행지를 모아 나만의 루트를 만들고, 다른 사람과 공유
-- 📝 **실제 후기와 평가**  
-  텍스트 + 사진 리뷰로 신뢰성 있는 여행 정보 제공
-- 👉 **커뮤니티 중심 확장성**  
-  사용자 참여가 쌓일수록 추천이 더 똑똑해지는 구조
+> AI와 데이터 기반으로 원하는 지역에 원하는 조건에 알맞는 임대 정보 제공 플랫폼  
+- 드롭다운(▼) 으로 지역 선택 → 요구사항 입력 → 추천 → 재추천까지 
 
 ---
 
 ## 👥 Contributors
 
 
-| 진혜성<br/>[@Jinecastle03](https://github.com/Jinecastle03) | 김동하<br/>[@eastha10](https://github.com/eastha10) | 박주은<br/>[@jueun036](https://github.com/jueun036) | 양보윤<br/>[@yxngbxyxn1003](https://github.com/yxngbxyxn1003) | 허지원<br/>[@jwheo22](https://github.com/jwheo22) |
+| 정재희 <br/>[@Jeong Jaehui](https://github.com/04jeong-j) | 서예준 <br/>[@syj4688](https://github.com/syj4688) | 임재준 <br/>[@Dessert99](https://github.com/Dessert99) | 양보윤 <br/>[@yxngbxyxn1003](https://github.com/yxngbxyxn1003) | 김혜린 <br/>[@hyelin93](https://github.com/hyelin93) |
 | --- | --- | --- | --- | --- |
-| <img src="https://i.ibb.co/pBBw3jw9/jpg.jpg" alt="진혜성"> | <img src="https://i.ibb.co/wZSLj0Bp/image.jpg" alt="김동하"> | <img src="https://i.ibb.co/HLB3XRgS/image.jpg" alt="박주은"> | <img src="https://i.ibb.co/PZ1QFqrS/image.jpg" alt="양보윤"> | <img src="https://i.ibb.co/PvqY3sQq/image.jpg" alt="허지원"> |
-| PM , BE , AI , Infra | FE , AI | BE , AI | BE , AI | FE , AI |
+| <img src="//" alt="정재희"> | <img src="//" alt="서예준"> | <img src="//" alt="임재준"> | <img src="//" alt="양보윤"> | <img src="//" alt="김혜린"> |
+| BE / 메인페이지 및 전체 게시판 CRUD | UI/UX | FE | BE / AI 주거 정보 추천 , 사용자 페이지 , 로그인/로그아웃 , 배포 | 기획 , UI/UX |
 
 
 
 ---
 
 
-## 📌 Stack  
-![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white) 
-![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white) 
-![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black) 
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)  
+### 🛠 Tech Stack
+
+<p align="left">
+  <!-- React -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/react/react-original.svg" alt="React" width="40" height="40"/>
+
+  <!-- TypeScript -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/typescript/typescript-original.svg" alt="TypeScript" width="40" height="40"/>
+
+  <!-- Visual Studio Code -->
+  <img src="https://img.shields.io/badge/Visual%20Studio%20Code-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white" alt="VS Code"/>
+
+  <!-- Java -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/java/java-original.svg" alt="Java" width="40" height="40"/>
+
+  <!-- Spring Boot (spring 아이콘) -->
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/spring/spring-original.svg" alt="Spring Boot" width="40" height="40"/>
+
+  <!-- IntelliJ IDEA -->
+  <img src="https://img.shields.io/badge/IntelliJ%20IDEA-000000?style=for-the-badge&logo=intellijidea&logoColor=white" alt="IntelliJ IDEA"/>
+</p>
 
 
-## 📌 Tools  
-![Visual Studio Code](https://img.shields.io/badge/Visual%20Studio%20Code-007ACC?style=for-the-badge&logo=visualstudiocode&logoColor=white) 
-![Figma](https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white) 
-![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)  
 
+### ☁️ Infra & Network
+
+<p align="left">
+  <!-- Axios -->
+  <img src="https://img.shields.io/badge/axios.js-854195?style=for-the-badge&logo=axios&logoColor=5A29E4" alt="Axios"/>
+
+  <!-- AWS EC2 -->
+  <img src="https://img.shields.io/badge/amazonec2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white" alt="AWS EC2"/>
+
+  <!-- Nginx -->
+  <img src="https://img.shields.io/badge/nginx-009639?style=for-the-badge&logo=nginx&logoColor=white" alt="Nginx"/>
+
+  <!-- GitHub Actions -->
+  <img src="https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white" alt="GitHub Actions"/>
+
+  <!-- Ubuntu -->
+  <img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white" alt="Ubuntu"/>
+</p>
+
+  
 
 ## 📌 Collaboration  
-![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white) 
-![Notion](https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white) 
-![Discord](https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white)  
 
+<p align="left">
 
-## 📌 Server  
-[![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white&style=for-the-badge)](https://www.docker.com/)
-[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white&style=for-the-badge)](https://github.com/features/actions)
-[![Ubuntu](https://img.shields.io/badge/Ubuntu-E95420?logo=ubuntu&logoColor=white&style=for-the-badge)](https://ubuntu.com/)
-[![Gunicorn](https://img.shields.io/badge/Gunicorn-499848?logo=gunicorn&logoColor=white&style=for-the-badge)](https://gunicorn.org/)
-[![Nginx](https://img.shields.io/badge/NGINX-009639?logo=nginx&logoColor=white&style=for-the-badge)](https://nginx.org/)
+  <!-- Figma -->
+  <img src="https://img.shields.io/badge/Figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white" alt="Figma"/>
+
+  <!-- Git -->
+  <img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white" alt="Git"/>
+
+  <!-- Notion -->
+  <img src="https://img.shields.io/badge/Notion-000000?style=for-the-badge&logo=notion&logoColor=white" alt="Notion"/>
+
+  <!-- Discord -->
+  <img src="https://img.shields.io/badge/Discord-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord"/>
+
+</p>
 
 
 ## ⚙️ Features
 
 | 기능 | 설명 | 화면 예시 |
 |------|------|-----------|
-| **태그 분류** | 여행지/후기/추천 시스템에서 태그를 자동 분류하여 검색 및 추천 정확도 향상 | <img width="500" alt="태그 분류" src="https://github.com/user-attachments/assets/372b5842-5afb-4fcc-9368-956fa362bf22" /> |
-| **장소 추천** | 사용자 입력(취향·키워드)에 맞는 장소를 벡터 검색 + AI 기반으로 추천 | <img width="500" alt="장소 추천" src="https://github.com/user-attachments/assets/ff6d7778-0a5a-4c3f-86bb-e5205606fdbb" /> |
-| **댓글 생성 및 조회** | 각 장소에 대한 댓글을 작성·조회 가능 (텍스트 + 이미지 첨부 지원) | <img width="500" alt="댓글 생성 및 조회" src="https://github.com/user-attachments/assets/b257b1ff-072e-4407-ab96-dc21b8b64f7f" /> |
-| **루트 추가** | 여행 루트를 직접 생성하고 장소를 추가/편집 가능 | <img width="250" alt="루트 추가1" src="https://github.com/user-attachments/assets/7b7ab98a-e309-4f9c-a901-5c36c67f582c" /> <img width="300" alt="루트 추가2" src="https://github.com/user-attachments/assets/7764c9de-5c2e-4496-b6ca-db31174dc3b6" /> <img width="220" alt="루트 추가3" src="https://github.com/user-attachments/assets/8e2f0546-66cb-4948-99bc-d065dfb134a9" /> |
-| **마이페이지 조회** | 내가 작성한 후기, 좋아요 누른 장소, 생성한 루트 등 개인화 정보 관리 | <img width="250" alt="마이페이지1" src="https://github.com/user-attachments/assets/b63aefb6-ee51-499a-92b2-3b9c87feac98" /> <img width="350" alt="마이페이지2" src="https://github.com/user-attachments/assets/a3c6d0a9-b40a-4429-a648-0028be616be8" /> <img width="350" alt="마이페이지3" src="https://github.com/user-attachments/assets/491431ea-5ff1-4afb-a4b2-9b9a220d2abc" /> <img width="350" alt="마이페이지4" src="https://github.com/user-attachments/assets/616d590d-8c21-4e34-a7cd-ab0ebdca25a6" /> |
-| **장소 검색** | 키워드, 태그, 지역 등을 기반으로 원하는 장소를 빠르게 검색 | <img width="350" alt="장소 검색1" src="https://github.com/user-attachments/assets/70ac374a-7749-43ae-ad5f-4f5a9bd0a4f2" /> <img width="350" alt="장소 검색2" src="https://github.com/user-attachments/assets/277c5d0e-ea26-4797-8726-84603203cf09" /> |
+| **태그 분류** |  | <img width="500" alt="a" src=" " /> |
+| **장소 추천** |  | <img width="500" alt="a" src=" " /> |
+| **댓글 생성 및 조회** |  | <img width="500" alt="c" src=" /> |
+| **루트 추가** | | <img width="250" alt="d" src="" /> <img width="300" alt="d" src=" " /> <img width="220" alt="e" src=" " /> |
+| **마이페이지 조회** |  | <img width="250" alt="마이페이지" src="" /> <img width="350" alt="사용자 페이지" src=" " />
+| **장소 검색** | 키워드 기반으로 원하는 장소를 빠르게 검색 | <img width="350" alt="장소 검색1" src=" " /> <img width="350" alt="장소 검색2" src="/> |
 
 
-## 📂 폴더 구조
 
-  ```
-📂
-└─ TRIPTAILOR
-TripTailor/
-├─ apps/
-├─ config/
-├─ media/
-├─ static/
-│ ├─ css/
-│ │ ├─ account/
-│ │ ├─ places/
-│ │ ├─ routes/
-│ │ ├─ users/
-│ │ ├─ main.css
-│ │ ├─ reset.css
-│ │ ├─ search.css
-│ │ ├─ style.css
-│ │ └─ tag.css
-│ ├─ images/
-│ └─ js/
-│ ├─ comment_crud.js
-│ ├─ edit_route.js
-│ ├─ like.js
-│ ├─ map.js
-│ ├─ route_detail.js
-│ ├─ script.js
-│ └─ tabbar.js
-├─ templates/
-├─ manage.py
-├─ README.md
-├─ recommend.py
-└─ requirements.txt
+## 📁 프로젝트 구조
 
-  ```
+```
+homemate/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── com/
+│   │   │       └── ganzithon/
+│   │   │           └── homemate/
+│   │   │               ├── HomemateApplication.java
+│   │   │               │
+│   │   │               ├── config/                    # 설정 클래스
+│   │   │               │   ├── CorsConfig.java
+│   │   │               │   ├── RestTemplateConfig.java
+│   │   │               │   ├── SecurityConfig.java
+│   │   │               │   └── WebConfig.java
+│   │   │               │
+│   │   │               ├── controller/                # REST API 컨트롤러
+│   │   │               │   ├── AuthController.java
+│   │   │               │   ├── HomeController.java
+│   │   │               │   ├── HousingInfoController.java
+│   │   │               │   ├── PostController.java
+│   │   │               │   └── ProfileController.java
+│   │   │               │
+│   │   │               ├── dto/                       # 데이터 전송 객체
+│   │   │               │   ├── ApiResponse.java
+│   │   │               │   ├── MessageResponse.java
+│   │   │               │   ├── PageResponse.java
+│   │   │               │   ├── TokenResponse.java
+│   │   │               │   ├── HousingApiResponse.java
+│   │   │               │   │
+│   │   │               │   ├── Comment/               # 댓글 관련 DTO
+│   │   │               │   │   ├── CommentResponse.java
+│   │   │               │   │   ├── CreateCommentRequest.java
+│   │   │               │   │   └── UpdateCommentRequest.java
+│   │   │               │   │
+│   │   │               │   ├── Login/                 # 인증 관련 DTO
+│   │   │               │   │   ├── LoginRequest.java
+│   │   │               │   │   ├── LoginResponse.java
+│   │   │               │   │   └── RegisterRequest.java
+│   │   │               │   │
+│   │   │               │   ├── Post/                  # 게시글 관련 DTO
+│   │   │               │   │   ├── CreatePostRequest.java
+│   │   │               │   │   ├── UpdatePostRequest.java
+│   │   │               │   │   ├── PostDetailResponse.java
+│   │   │               │   │   ├── PostListItemResponse.java
+│   │   │               │   │   ├── HomePostsResponse.java
+│   │   │               │   │   ├── PostCategory.java
+│   │   │               │   │   └── SearchType.java
+│   │   │               │   │
+│   │   │               │   ├── Profile/               # 프로필 관련 DTO
+│   │   │               │   │   ├── ProfileResponse.java
+│   │   │               │   │   └── ProfileUpdateRequest.java
+│   │   │               │   │
+│   │   │               │   └── Recomendation/         # 추천 관련 DTO
+│   │   │               │       ├── RecommendationRequest.java
+│   │   │               │       ├── RecommendationRequestV2.java
+│   │   │               │       ├── RecommendationResponse.java
+│   │   │               │       └── ResetResponse.java
+│   │   │               │
+│   │   │               ├── entity/                    # JPA 엔티티
+│   │   │               │   ├── User.java
+│   │   │               │   ├── UserAccount.java
+│   │   │               │   ├── Comment.java
+│   │   │               │   ├── HousingInfo.java
+│   │   │               │   │
+│   │   │               │   └── Post/                  # 게시글 관련 엔티티
+│   │   │               │       ├── FreePost.java
+│   │   │               │       ├── FreePostImage.java
+│   │   │               │       ├── PolicyPost.java
+│   │   │               │       ├── PolicyPostImage.java
+│   │   │               │       ├── RoommatePost.java
+│   │   │               │       ├── RoommatePostImage.java
+│   │   │               │       └── PostLike.java
+│   │   │               │
+│   │   │               ├── repository/                # JPA 리포지토리
+│   │   │               │   ├── UserRepository.java
+│   │   │               │   ├── CommentRepository.java
+│   │   │               │   ├── HousingInfoRepository.java
+│   │   │               │   │
+│   │   │               │   └── Post/                  # 게시글 관련 리포지토리
+│   │   │               │       ├── FreePostRepository.java
+│   │   │               │       ├── FreePostImageRepository.java
+│   │   │               │       ├── PolicyPostRepository.java
+│   │   │               │       ├── PolicyPostImageRepository.java
+│   │   │               │       ├── RoommatePostRepository.java
+│   │   │               │       ├── RoommatePostImageRepository.java
+│   │   │               │       └── PostLikeRepository.java
+│   │   │               │
+│   │   │               ├── service/                   # 비즈니스 로직 서비스
+│   │   │               │   ├── AuthService.java
+│   │   │               │   ├── ProfileService.java
+│   │   │               │   ├── CommentService.java
+│   │   │               │   ├── HousingInfoService.java
+│   │   │               │   ├── UpstageAiService.java
+│   │   │               │   │
+│   │   │               │   ├── PostLikeService.java
+│   │   │               │   ├── FreePostService.java
+│   │   │               │   ├── PolicyPostService.java
+│   │   │               │   ├── RoommatePostService.java
+│   │   │               │   │
+│   │   │               │   └── storage/               # 이미지 저장소 인터페이스
+│   │   │               │       ├── ImageStorage.java
+│   │   │               │       └── LocalImageStorage.java
+│   │   │               │
+│   │   │               ├── security/                  # Spring Security 관련
+│   │   │               │   └── UserPrincipal.java
+│   │   │               │
+│   │   │               ├── jwt/                       # JWT 인증 관련
+│   │   │               │   ├── JwtTokenProvider.java
+│   │   │               │   ├── JwtAuthenticationFilter.java
+│   │   │               │   └── JwtProperties.java
+│   │   │               │
+│   │   │               └── exception/                 # 예외 처리
+│   │   │                   └── ExceptionHandler.java
+│   │   │
+│   │   └── resources/                                 # 설정 파일
+│   │       ├── application.properties
+│   │       └── application.yml
+│   │
+│   └── test/                                          # 테스트 코드
+│       └── java/
+│           └── com/
+│               └── ganzithon/
+│                   └── homemate/
+│                       └── HomemateApplicationTests.java
+│
+├── build.gradle                                       # Gradle 빌드 설정
+├── settings.gradle                                    # Gradle 프로젝트 설정
+├── gradlew                                            # Gradle Wrapper (Unix)
+├── gradlew.bat                                        # Gradle Wrapper (Windows)
+├── gradle/
+│   └── wrapper/
+│       ├── gradle-wrapper.jar
+│       └── gradle-wrapper.properties
+│
+└── README.md                                          # 프로젝트 설명서
+```
