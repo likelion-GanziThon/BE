@@ -28,8 +28,7 @@
 
 | 정재희 <br/>[@Jeong Jaehui](https://github.com/04jeong-j) | 서예준 <br/>[@syj4688](https://github.com/syj4688) | 임재준 <br/>[@Dessert99](https://github.com/Dessert99) | 양보윤 <br/>[@yxngbxyxn1003](https://github.com/yxngbxyxn1003) | 김혜린 <br/>[@hyelin93](https://github.com/hyelin93) |
 | --- | --- | --- | --- | --- |
-| <img src="//" alt="정재희"> | <img src="//" alt="서예준"> | <img src="//" alt="임재준"> | <img src="//" alt="양보윤"> | <img src="//" alt="김혜린"> |
-| BE / 메인페이지 및 전체 게시판 CRUD | UI/UX | FE | BE / AI 주거 정보 추천 , 사용자 페이지 , 로그인/로그아웃 , 배포 | 기획 , UI/UX |
+| BE / 메인페이지<br/><br/>전체 게시판 CRUD | UI/UX | FE | BE / AI 주거 정보 추천 , 사용자 페이지<br/><br/>배포 | 기획 , UI/UX |
 
 
 
@@ -104,12 +103,12 @@
 
 | 기능 | 설명 | 화면 예시 |
 |------|------|-----------|
-| **태그 분류** |  | <img width="500" alt="a" src=" " /> |
-| **장소 추천** |  | <img width="500" alt="a" src=" " /> |
-| **댓글 생성 및 조회** |  | <img width="500" alt="c" src=" /> |
-| **루트 추가** | | <img width="250" alt="d" src="" /> <img width="300" alt="d" src=" " /> <img width="220" alt="e" src=" " /> |
-| **마이페이지 조회** |  | <img width="250" alt="마이페이지" src="" /> <img width="350" alt="사용자 페이지" src=" " />
-| **장소 검색** | 키워드 기반으로 원하는 장소를 빠르게 검색 | <img width="350" alt="장소 검색1" src=" " /> <img width="350" alt="장소 검색2" src="/> |
+| **메인 페이지** | 커뮤니티·룸메이트·정부지원 최신 게시글을 통합 미리보기로 제공하며, 메뉴바를 통해 프로필/글쓰기/카테고리 이동/로그인·로그아웃을 지원 | <img width="500" alt="main" src="https://github.com/likelion-GanziThon/BE/blob/feature/hl/main.png?raw=true" /> |
+| **커뮤니티 기능** | 시/구 지역 선택 후 해당 지역 게시글 조회, 게시글 작성·수정·삭제, 이미지 첨부(최대 4장), 좋아요·댓글, 검색 기능 제공 | <img width="500" alt="community" src="https://github.com/likelion-GanziThon/BE/blob/feature/hl/community.png?raw=true" /> |
+| **주거 정보 제공** | 공공데이터 API 기반 공공임대주택 단지 정보 제공 및 텍스트 조건 입력 → AI 기반 맞춤형 추천 기능 | <img width="500" alt="housing-info" src="https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A3%BC%EA%B1%B0%EC%A0%95%EB%B3%B4.png?raw=true" /> |
+| **룸메이트 찾기** | 시/구 지역 기반 조회, 게시글 작성·수정·삭제, 이미지 첨부, 좋아요·댓글, 오픈채팅 필수 입력, 검색 기능 제공 | <img width="500" alt="roommate" src="https://github.com/likelion-GanziThon/BE/blob/feature/hl/roommate.png?raw=true" /> |
+| **정부 주거지원 정보** | 정부 지원 정책 게시판 제공. 작성·수정·삭제, 이미지 첨부, 좋아요·댓글, 검색 기능 지원 | <img width="500" alt="gov-support" src="https://github.com/likelion-GanziThon/BE/blob/feature/hl/%EC%A0%95%EB%B6%80%EC%A3%BC%EA%B1%B0.png?raw=true" /> |
+
 
 
 
